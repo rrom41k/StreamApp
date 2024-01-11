@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+
 using StreamAppApi.Bll.DbConfiguration;
 using StreamAppApi.Contracts.Commands.GenreCommands;
 using StreamAppApi.Contracts.Dto;
@@ -12,7 +13,7 @@ public class GenreService : IGenreService
 {
     private readonly StreamPlatformDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    
+
     public GenreService(StreamPlatformDbContext dbContext, IHttpContextAccessor httpContextAccessor, string appSetTok)
     {
         _dbContext = dbContext;
@@ -22,36 +23,47 @@ public class GenreService : IGenreService
     public async Task<GenreDto> GetGenreBySlug(string slug, CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested)
+        {
             throw new OperationCanceledException();
-            
+        }
+
         var existingGenre = await _dbContext.Genres.AsNoTracking()
-                               .FirstOrDefaultAsync(existingGenre => existingGenre.Slug == slug, cancellationToken)
-                           ?? throw new ArgumentException("Genre not found.");
-        
+                .FirstOrDefaultAsync(existingGenre => existingGenre.Slug == slug, cancellationToken)
+            ?? throw new ArgumentException("Genre not found.");
+
         return GenreToDto(existingGenre);
     }
 
     public async Task<List<Dictionary<string, GenreDto>>> GetAllGenres(CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
+        {
             throw new OperationCanceledException();
+        }
 
         string? searchTerm = _httpContextAccessor.HttpContext.Request.Query["searchTerm"];
 
-        if (searchTerm == null) searchTerm = "";
-        
+        if (searchTerm == null)
+        {
+            searchTerm = "";
+        }
+
         var genres = await _dbContext.Genres.AsNoTracking()
-            .Where(genre => 
-                genre.Name.Contains(searchTerm) ||
-                genre.Slug.Contains(searchTerm) ||
-                genre.Description.Contains(searchTerm)).ToListAsync(cancellationToken);
+            .Where(
+                genre =>
+                    genre.Name.Contains(searchTerm)
+                    || genre.Slug.Contains(searchTerm)
+                    || genre.Description.Contains(searchTerm))
+            .ToListAsync(cancellationToken);
+
         return MapGenresToDto(genres);
     }
-    
+
     public async Task<List<Dictionary<string, GenreDto>>> GetCollections(CancellationToken cancellationToken)
     {
         var genres = await GetAllGenres(cancellationToken);
         var collections = genres;
+
         // TODO
         return collections;
     }
@@ -61,65 +73,87 @@ public class GenreService : IGenreService
     public async Task<GenreDto> CreateGenre(GenreCreateCommand genreCreateCommand, CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested) // Проверка на отмену запроса
+        {
             throw new OperationCanceledException();
-        
-        var findGenre = await _dbContext.Genres.FirstOrDefaultAsync(genre => genre.Slug == genreCreateCommand.slug.ToLower());
-        
-        if (findGenre != null) 
-            throw new Exception("Genre with this slug contains in DB");
-        
-        Genre newGenre = new(genreCreateCommand.name, genreCreateCommand.slug.ToLower(), genreCreateCommand.description, genreCreateCommand.icon);
-        
+        }
+
+        var findGenre =
+            await _dbContext.Genres.FirstOrDefaultAsync(genre => genre.Slug == genreCreateCommand.slug.ToLower());
+
+        if (findGenre != null)
+        {
+            throw new("Genre with this slug contains in DB");
+        }
+
+        Genre newGenre = new(
+            genreCreateCommand.name,
+            genreCreateCommand.slug.ToLower(),
+            genreCreateCommand.description,
+            genreCreateCommand.icon);
+
         _dbContext.Genres.Add(newGenre);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        
+
         return GenreToDto(newGenre);
     }
 
     public async Task<GenreDto> GetGenreById(string id, CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested)
+        {
             throw new OperationCanceledException();
-            
+        }
+
         var existingGenre = await _dbContext.Genres.AsNoTracking()
-                                .FirstOrDefaultAsync(existingGenre => existingGenre.GenreId == id, cancellationToken)
-                            ?? throw new ArgumentException("Genre not found.");
-        
+                .FirstOrDefaultAsync(existingGenre => existingGenre.GenreId == id, cancellationToken)
+            ?? throw new ArgumentException("Genre not found.");
+
         return GenreToDto(existingGenre);
     }
 
-    public async Task<GenreDto> UpdateGenre(string id, GenreUpdateCommand genreUpdateCommand, CancellationToken cancellationToken)
+    public async Task<GenreDto> UpdateGenre(
+        string id,
+        GenreUpdateCommand genreUpdateCommand,
+        CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested)
+        {
             throw new OperationCanceledException();
-            
+        }
+
         var genreToUpdate = await _dbContext.Genres.AsNoTracking()
             .FirstOrDefaultAsync(genreToUpdate => genreToUpdate.GenreId == id, cancellationToken);
 
         if (genreToUpdate == null)
+        {
             throw new ArgumentException("Genre not found.");
+        }
 
         UpdateGenreHelper(genreToUpdate, genreUpdateCommand);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        
-        
+
+
         return GenreToDto(genreToUpdate);
     }
 
     public async Task<GenreDto> DeleteGenre(string id, CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested)
+        {
             throw new OperationCanceledException();
-            
+        }
+
         var existingGenre = await _dbContext.Genres.AsNoTracking()
             .FirstOrDefaultAsync(existingGenre => existingGenre.GenreId == id, cancellationToken);
 
         if (existingGenre == null)
+        {
             throw new ArgumentException("Genre not fount.");
-        
+        }
+
         _dbContext.Genres.Remove(existingGenre);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        
+
         return GenreToDto(existingGenre);
     }
 
@@ -131,18 +165,23 @@ public class GenreService : IGenreService
         genreToUpdate.Icon = genreUpdateCommand.icon ?? genreToUpdate.Icon;
     }
 
-    private GenreDto GenreToDto(Genre genre) =>
-        new GenreDto(genre.GenreId, genre.Name, genre.Slug, genre.Description, genre.Icon);
+    public static GenreDto GenreToDto(Genre genre)
+    {
+        return new(
+            genre.GenreId,
+            genre.Name,
+            genre.Slug,
+            genre.Description,
+            genre.Icon);
+    }
 
     private List<Dictionary<string, GenreDto>> MapGenresToDto(List<Genre> genres)
     {
         List<Dictionary<string, GenreDto>> genresListDto = new();
+
         foreach (var genre in genres)
         {
-            var genreDict = new Dictionary<string, GenreDto>
-            {
-                { "genre", GenreToDto(genre) }
-            };
+            var genreDict = new Dictionary<string, GenreDto> { { "genre", GenreToDto(genre) } };
             genresListDto.Add(genreDict);
         }
 

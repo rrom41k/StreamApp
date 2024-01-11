@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+
 using StreamAppApi.Bll.DbConfiguration;
 using StreamAppApi.Contracts.Commands.ActorCommands;
 using StreamAppApi.Contracts.Dto;
@@ -10,11 +11,15 @@ namespace StreamAppApi.Bll;
 
 public class ActorService : IActorService
 {
+    private readonly string _appSetTok;
     private readonly StreamPlatformDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly string _appSetTok;
-    
-    public ActorService(string appSettingsToken, StreamPlatformDbContext dbContext, IHttpContextAccessor httpContextAccessor, string appSetTok)
+
+    public ActorService(
+        string appSettingsToken,
+        StreamPlatformDbContext dbContext,
+        IHttpContextAccessor httpContextAccessor,
+        string appSetTok)
     {
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
@@ -24,29 +29,39 @@ public class ActorService : IActorService
     public async Task<ActorDto> GetActorBySlug(string slug, CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
+        {
             throw new OperationCanceledException();
-            
+        }
+
         var existingActor = await _dbContext.Actors.AsNoTracking()
-                               .FirstOrDefaultAsync(existingActor => existingActor.Slug == slug, cancellationToken)
-                           ?? throw new ArgumentException("Actor not found.");
-        
+                .FirstOrDefaultAsync(existingActor => existingActor.Slug == slug, cancellationToken)
+            ?? throw new ArgumentException("Actor not found.");
+
         return ActorToDto(existingActor);
     }
 
     public async Task<List<Dictionary<string, ActorDto>>> GetAllActors(CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
+        {
             throw new OperationCanceledException();
+        }
 
         string? searchTerm = _httpContextAccessor.HttpContext.Request.Query["searchTerm"];
 
-        if (searchTerm == null) searchTerm = "";
-        
+        if (searchTerm == null)
+        {
+            searchTerm = "";
+        }
+
         var actors = await _dbContext.Actors.AsNoTracking()
-            .Where(actor => 
-                actor.Name.Contains(searchTerm) ||
-                actor.Slug.Contains(searchTerm) ||
-                actor.Photo.Contains(searchTerm)).ToListAsync(cancellationToken);
+            .Where(
+                actor =>
+                    actor.Name.Contains(searchTerm)
+                    || actor.Slug.Contains(searchTerm)
+                    || actor.Photo.Contains(searchTerm))
+            .ToListAsync(cancellationToken);
+
         return MapActorsToDto(actors);
     }
 
@@ -55,66 +70,84 @@ public class ActorService : IActorService
     public async Task<ActorDto> CreateActor(ActorCreateCommand actorCreateCommand, CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested) // Проверка на отмену запроса
+        {
             throw new OperationCanceledException();
-        
-        var findActor = await _dbContext.Actors.FirstOrDefaultAsync(actor => 
-            actor.Slug == actorCreateCommand.slug.ToLower());
-        
-        if (findActor != null) 
-            throw new Exception("Actor with this slug contains in DB");
-        
+        }
+
+        var findActor = await _dbContext.Actors.FirstOrDefaultAsync(
+            actor =>
+                actor.Slug == actorCreateCommand.slug.ToLower());
+
+        if (findActor != null)
+        {
+            throw new("Actor with this slug contains in DB");
+        }
+
         Actor newActor = new(actorCreateCommand.name, actorCreateCommand.slug, actorCreateCommand.photo);
-        
+
         _dbContext.Actors.Add(newActor);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        
+
         return ActorToDto(newActor);
     }
 
     public async Task<ActorDto> GetActorById(string id, CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested)
+        {
             throw new OperationCanceledException();
-            
+        }
+
         var existingActor = await _dbContext.Actors.AsNoTracking()
-                                .FirstOrDefaultAsync(existingActor => existingActor.ActorId == id, cancellationToken)
-                            ?? throw new ArgumentException("Actor not found.");
-        
+                .FirstOrDefaultAsync(existingActor => existingActor.ActorId == id, cancellationToken)
+            ?? throw new ArgumentException("Actor not found.");
+
         return ActorToDto(existingActor);
     }
 
-    public async Task<ActorDto> UpdateActor(string id, ActorUpdateCommand actorUpdateCommand, CancellationToken cancellationToken)
+    public async Task<ActorDto> UpdateActor(
+        string id,
+        ActorUpdateCommand actorUpdateCommand,
+        CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested)
+        {
             throw new OperationCanceledException();
-            
+        }
+
         var actorToUpdate = await _dbContext.Actors.AsNoTracking()
             .FirstOrDefaultAsync(actorToUpdate => actorToUpdate.ActorId == id, cancellationToken);
 
         if (actorToUpdate == null)
+        {
             throw new ArgumentException("Actor not found.");
+        }
 
         UpdateActorHelper(actorToUpdate, actorUpdateCommand);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        
-        
+
+
         return ActorToDto(actorToUpdate);
     }
 
     public async Task<ActorDto> DeleteActor(string id, CancellationToken cancellationToken)
     {
         if (cancellationToken.IsCancellationRequested)
+        {
             throw new OperationCanceledException();
-            
+        }
+
         var existingActor = await _dbContext.Actors.AsNoTracking()
             .FirstOrDefaultAsync(existingActor => existingActor.ActorId == id, cancellationToken);
 
         if (existingActor == null)
+        {
             throw new ArgumentException("Actor not fount.");
-        
+        }
+
         _dbContext.Actors.Remove(existingActor);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        
+
         return ActorToDto(existingActor);
     }
 
@@ -125,18 +158,22 @@ public class ActorService : IActorService
         actorToUpdate.Photo = actorUpdateCommand.photo ?? actorToUpdate.Photo;
     }
 
-    private ActorDto ActorToDto(Actor actor) =>
-        new ActorDto(actor.ActorId, actor.Name, actor.Slug, actor.Photo);
+    public static ActorDto ActorToDto(Actor actor)
+    {
+        return new(
+            actor.ActorId,
+            actor.Name,
+            actor.Slug,
+            actor.Photo);
+    }
 
     private List<Dictionary<string, ActorDto>> MapActorsToDto(List<Actor> actors)
     {
         List<Dictionary<string, ActorDto>> actorsListDto = new();
+
         foreach (var actor in actors)
         {
-            var actorDict = new Dictionary<string, ActorDto>
-            {
-                { "actor", ActorToDto(actor) }
-            };
+            var actorDict = new Dictionary<string, ActorDto> { { "actor", ActorToDto(actor) } };
             actorsListDto.Add(actorDict);
         }
 

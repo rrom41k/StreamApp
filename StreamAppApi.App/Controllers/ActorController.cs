@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+
 using StreamAppApi.Contracts.Commands.ActorCommands;
 using StreamAppApi.Contracts.Interfaces;
 
@@ -9,7 +10,7 @@ namespace StreamAppApi.App.Controllers;
 [ApiController]
 public class ActorController : ControllerBase
 {
-    private IActorService _actorService;
+    private readonly IActorService _actorService;
 
     public ActorController(IActorService actorService)
     {
@@ -21,30 +22,34 @@ public class ActorController : ControllerBase
     public async Task<IActionResult> GetActorBySlug(string slug)
     {
         var cancellationToken = HttpContext?.RequestAborted ?? default;
+
         try
         {
             var actor = await _actorService.GetActorBySlug(slug, cancellationToken);
-                    
-                    if (actor == null)
-                        return NotFound();
-            
-                    return Ok(new { actor = actor });
+
+            if (actor == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new { actor });
         }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
-        
     }
-    
+
     // GET: api/actors/
     [HttpGet]
     public async Task<IActionResult> GetAllActors()
     {
         var cancellationToken = HttpContext?.RequestAborted ?? default;
+
         try
         {
             var actors = await _actorService.GetAllActors(cancellationToken);
+
             return Ok(actors);
         }
         catch (Exception ex)
@@ -56,13 +61,16 @@ public class ActorController : ControllerBase
     /* Admin Rights */
 
     // POST: api/actors
-    [HttpPost, Authorize(Roles = "Admin")]
+    [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Post([FromBody] ActorCreateCommand actorCreateCommand)
     {
         var cancellationToken = HttpContext?.RequestAborted ?? default;
+
         try
         {
             var createdActor = await _actorService.CreateActor(actorCreateCommand, cancellationToken);
+
             return Ok(new { actor = createdActor });
         }
         catch (Exception ex)
@@ -70,9 +78,10 @@ public class ActorController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
-    
+
     // GET: api/actors/{id}
-    [HttpGet("{id}"), Authorize(Roles = "Admin")]
+    [HttpGet("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> GetActorById(string id)
     {
         try
@@ -80,23 +89,25 @@ public class ActorController : ControllerBase
             var cancellationToken = HttpContext?.RequestAborted ?? default;
             var actor = await _actorService.GetActorById(id, cancellationToken);
 
-            return Ok(new { actor = actor });
+            return Ok(new { actor });
         }
         catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
-        
     }
 
     // PUT: api/actors/:id
-    [HttpPut("{id}"), Authorize(Roles = "Admin")]
+    [HttpPut("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> PutActorById(string id, [FromBody] ActorUpdateCommand actorUpdateCommand)
     {
         var cancellationToken = HttpContext?.RequestAborted ?? default;
+
         try
         {
             var updatedActor = await _actorService.UpdateActor(id, actorUpdateCommand, cancellationToken);
+
             return Ok(new { actor = updatedActor });
         }
         catch (Exception ex)
@@ -106,13 +117,16 @@ public class ActorController : ControllerBase
     }
 
     // DELETE: api/actors/{id}
-    [HttpDelete("{id}"), Authorize(Roles = "Admin")]
+    [HttpDelete("{id}")]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Delete(string id)
     {
         var cancellationToken = HttpContext?.RequestAborted ?? default;
+
         try
         {
             var removedActor = await _actorService.DeleteActor(id, cancellationToken);
+
             return Ok(removedActor);
         }
         catch (Exception ex)

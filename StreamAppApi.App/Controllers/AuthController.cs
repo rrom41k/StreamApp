@@ -1,7 +1,8 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+
 using Microsoft.AspNetCore.Mvc;
-using StreamAppApi.Bll.DbConfiguration;
+
 using StreamAppApi.Contracts.Commands.AuthCommands;
 using StreamAppApi.Contracts.Interfaces;
 
@@ -17,18 +18,26 @@ public class AuthController : ControllerBase
     {
         _authService = authService;
     }
-    
+
     [HttpPost("register")]
     public async Task<ActionResult> Register([FromBody] AuthRegisterCommand authRegisterCommand)
     {
         var cancellationToken = HttpContext?.RequestAborted ?? default;
+
         if (!IsValidEmail(authRegisterCommand.email))
+        {
             return BadRequest("Invalid email");
+        }
+
         if (authRegisterCommand.password.Length < 6)
+        {
             return BadRequest("Invalid password");
+        }
+
         try
         {
             var result = await _authService.RegisterUser(authRegisterCommand, cancellationToken);
+
             return Ok(result);
         }
         catch (ArgumentException ex)
@@ -41,13 +50,21 @@ public class AuthController : ControllerBase
     public async Task<ActionResult> Login([FromBody] AuthLoginCommand authLoginCommand)
     {
         var cancellationToken = HttpContext?.RequestAborted ?? default;
+
         if (!IsValidEmail(authLoginCommand.email))
+        {
             return BadRequest("Invalid email");
+        }
+
         if (authLoginCommand.password.Length < 6)
+        {
             return BadRequest("Invalid password");
+        }
+
         try
         {
             var result = await _authService.LoginUser(authLoginCommand, cancellationToken);
+
             return Ok(result);
         }
         catch (ArgumentException ex)
@@ -55,15 +72,17 @@ public class AuthController : ControllerBase
             return BadRequest(ex.Message);
         }
     }
-    
+
     [HttpPost("login/access-token")]
     public async Task<ActionResult> GetNewTokens([FromBody] AuthGetNewTokensCommand? getNewTokensCommand)
     {
         var cancellationToken = HttpContext?.RequestAborted ?? default;
+
         try
         {
             //var result = await _authService.GetNewTokens(getNewTokensCommand, cancellationToken);
             var result = await _authService.GetNewTokens(cancellationToken);
+
             return Ok(result);
         }
         catch (ArgumentException ex)
@@ -75,13 +94,19 @@ public class AuthController : ControllerBase
     private static bool IsValidEmail(string email)
     {
         if (string.IsNullOrWhiteSpace(email))
+        {
             return false;
+        }
 
         try
         {
             // Normalize the domain
-            email = Regex.Replace(email, @"(@)(.+)$", DomainMapper,
-                RegexOptions.None, TimeSpan.FromMilliseconds(200));
+            email = Regex.Replace(
+                email,
+                @"(@)(.+)$",
+                DomainMapper,
+                RegexOptions.None,
+                TimeSpan.FromMilliseconds(200));
 
             // Examines the domain part of the email and normalizes it.
             string DomainMapper(Match match)
@@ -90,7 +115,7 @@ public class AuthController : ControllerBase
                 var idn = new IdnMapping();
 
                 // Pull out and process domain name (throws ArgumentException on invalid)
-                string domainName = idn.GetAscii(match.Groups[2].Value);
+                var domainName = idn.GetAscii(match.Groups[2].Value);
 
                 return match.Groups[1].Value + domainName;
             }
@@ -106,9 +131,11 @@ public class AuthController : ControllerBase
 
         try
         {
-            return Regex.IsMatch(email,
+            return Regex.IsMatch(
+                email,
                 @"^[^@\s]+@[^@\s]+\.[^@\s]+$",
-                RegexOptions.IgnoreCase, TimeSpan.FromMilliseconds(250));
+                RegexOptions.IgnoreCase,
+                TimeSpan.FromMilliseconds(250));
         }
         catch (RegexMatchTimeoutException)
         {

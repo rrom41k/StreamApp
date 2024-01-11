@@ -1,5 +1,3 @@
-using Microsoft.AspNetCore.Authorization;
-
 namespace StreamAppApi.App;
 
 public class WeatherForecast

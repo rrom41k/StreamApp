@@ -63,7 +63,7 @@ namespace StreamAppApi.Migrations.Migrations
 
                     b.HasIndex("MovieId");
 
-                    b.ToTable("ActorMovie");
+                    b.ToTable("ActorMovies");
                 });
 
             modelBuilder.Entity("StreamAppApi.Contracts.Models.Genre", b =>
@@ -112,7 +112,7 @@ namespace StreamAppApi.Migrations.Migrations
 
                     b.HasIndex("MovieId");
 
-                    b.ToTable("GenreMovie");
+                    b.ToTable("GenreMovies");
                 });
 
             modelBuilder.Entity("StreamAppApi.Contracts.Models.Movie", b =>
@@ -153,9 +153,6 @@ namespace StreamAppApi.Migrations.Migrations
                         .HasColumnType("text")
                         .HasColumnName("title");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("text");
-
                     b.Property<string>("VideoUrl")
                         .IsRequired()
                         .HasColumnType("text")
@@ -165,8 +162,6 @@ namespace StreamAppApi.Migrations.Migrations
 
                     b.HasIndex("Slug")
                         .IsUnique();
-
-                    b.HasIndex("UserId");
 
                     b.ToTable("Movies", (string)null);
                 });
@@ -292,15 +287,6 @@ namespace StreamAppApi.Migrations.Migrations
                     b.Navigation("Genre");
 
                     b.Navigation("Movie");
-                });
-
-            modelBuilder.Entity("StreamAppApi.Contracts.Models.Movie", b =>
-                {
-                    b.HasOne("StreamAppApi.Contracts.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("StreamAppApi.Contracts.Models.MovieParameter", b =>

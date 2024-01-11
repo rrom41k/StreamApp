@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.Extensions.Configuration;
+
 using StreamAppApi.Bll.DbConfiguration;
 
 namespace StreamAppApi.Migrations;
@@ -18,9 +19,11 @@ public class DesignTimeDbContextFactory : IDesignTimeDbContextFactory<StreamPlat
 
         var connectionString = configuration.GetConnectionString("StreamApp");
 
-        builder.UseNpgsql(connectionString, b => 
-            b.MigrationsAssembly(typeof(DesignTimeDbContextFactory).Assembly.GetName().Name));
+        builder.UseNpgsql(
+            connectionString,
+            b =>
+                b.MigrationsAssembly(typeof(DesignTimeDbContextFactory).Assembly.GetName().Name));
 
-        return new StreamPlatformDbContext(builder.Options);
+        return new(builder.Options);
     }
 }
