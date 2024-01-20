@@ -34,7 +34,7 @@ public class GenreService : IGenreService
         return GenreToDto(existingGenre);
     }
 
-    public async Task<List<Dictionary<string, GenreDto>>> GetAllGenres(CancellationToken cancellationToken = default)
+    public async Task<List<GenreDto>> GetAllGenres(CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
         {
@@ -59,13 +59,32 @@ public class GenreService : IGenreService
         return MapGenresToDto(genres);
     }
 
-    public async Task<List<Dictionary<string, GenreDto>>> GetCollections(CancellationToken cancellationToken)
+    public async Task<List<CollectionDto>> GetCollections(CancellationToken cancellationToken)
     {
-        var genres = await GetAllGenres(cancellationToken);
-        var collections = genres;
+        var genres = await _dbContext.Genres.AsNoTracking().ToListAsync(cancellationToken);
+        var collection = new List<CollectionDto>();
 
-        // TODO
-        return collections;
+        foreach (var genre in genres)
+        {
+            var genreMovies = await _dbContext.GenreMovies.AsNoTracking()
+                .Include(genreMovie => genreMovie.Movie)
+                .FirstOrDefaultAsync(movie => movie.GenreId == genre.GenreId, cancellationToken);
+
+            if (genreMovies == null)
+            {
+                continue;
+            }
+
+            var result = new CollectionDto(
+                genre.GenreId,
+                genreMovies.Movie.BigPoster,
+                genre.Name,
+                genre.Slug);
+
+            collection.Add(result);
+        }
+
+        return collection;
     }
 
     /* Admin Rights */
@@ -157,6 +176,8 @@ public class GenreService : IGenreService
         return GenreToDto(existingGenre);
     }
 
+    // Helpful methods
+
     private void UpdateGenreHelper(Genre genreToUpdate, GenreUpdateCommand genreUpdateCommand)
     {
         genreToUpdate.Name = genreUpdateCommand.name ?? genreToUpdate.Name;
@@ -175,14 +196,26 @@ public class GenreService : IGenreService
             genre.Icon);
     }
 
-    private List<Dictionary<string, GenreDto>> MapGenresToDto(List<Genre> genres)
+    private List<GenreDto> MapGenresToDto(List<Genre> genres)
     {
-        List<Dictionary<string, GenreDto>> genresListDto = new();
+        List<GenreDto> genresListDto = new();
 
         foreach (var genre in genres)
         {
-            var genreDict = new Dictionary<string, GenreDto> { { "genre", GenreToDto(genre) } };
-            genresListDto.Add(genreDict);
+            genresListDto.Add(GenreToDto(genre));
+        }
+
+        return genresListDto;
+    }
+
+    public static List<GenreDto> MapGenresToDto(ICollection<GenreMovie> genres)
+    {
+        List<GenreDto> genresListDto = new();
+
+        foreach (var genre in genres)
+        {
+            var genreDto = GenreToDto(genre.Genre);
+            genresListDto.Add(genreDto);
         }
 
         return genresListDto;

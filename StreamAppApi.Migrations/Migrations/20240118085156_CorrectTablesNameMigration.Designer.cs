@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using StreamAppApi.Bll.DbConfiguration;
@@ -11,9 +12,11 @@ using StreamAppApi.Bll.DbConfiguration;
 namespace StreamAppApi.Migrations.Migrations
 {
     [DbContext(typeof(StreamPlatformDbContext))]
-    partial class StreamPlatformDbContextModelSnapshot : ModelSnapshot
+    [Migration("20240118085156_CorrectTablesNameMigration")]
+    partial class CorrectTablesNameMigration
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -243,9 +246,6 @@ namespace StreamAppApi.Migrations.Migrations
 
                     b.Property<string>("MovieId")
                         .HasColumnType("text");
-
-                    b.Property<double?>("Rating")
-                        .HasColumnType("double precision");
 
                     b.HasKey("UserId", "MovieId");
 

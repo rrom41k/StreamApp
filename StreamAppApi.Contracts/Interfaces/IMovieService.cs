@@ -7,11 +7,11 @@ public interface IMovieService
 {
     Task<MovieDto> GetMovieBySlug(string slug, CancellationToken cancellationToken);
 
-    Task<List<Dictionary<string, MovieDto>>> GetMovieByActor(
+    Task<List<MovieDto>> GetMovieByActor(
         string actorId,
         CancellationToken cancellationToken);
 
-    Task<List<Dictionary<string, MovieDto>>> GetMovieByGenres(
+    Task<List<MovieDto>> GetMovieByGenres(
         MovieByGenresCommand genreIds,
         CancellationToken cancellationToken);
 
@@ -19,7 +19,7 @@ public interface IMovieService
         UpdateCountOpenedCommand updateCountOpenedCommand,
         CancellationToken cancellationToken);
 
-    Task<List<Dictionary<string, MovieDto>>> GetAllMovies(CancellationToken cancellationToken);
+    Task<List<MovieDto>> GetAllMovies(CancellationToken cancellationToken);
 
     /* Admin Rights */
 
@@ -40,10 +40,5 @@ public interface IMovieService
         string id,
         CancellationToken cancellationToken);
 
-    Task<List<Dictionary<string, MovieDto>>> GetMostPopularAsync(CancellationToken cancellationToken);
-
-    Task<MovieDto> UpdateRatingAsync(
-        string movieId,
-        double newRating,
-        CancellationToken cancellationToken);
+    Task<List<MovieDto>> GetMostPopularAsync(CancellationToken cancellationToken);
 }

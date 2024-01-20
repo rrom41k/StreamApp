@@ -6,9 +6,9 @@ namespace StreamAppApi.Contracts.Interfaces;
 public interface IGenreService
 {
     Task<GenreDto> GetGenreBySlug(string slug, CancellationToken cancellationToken);
-    Task<List<Dictionary<string, GenreDto>>> GetAllGenres(CancellationToken cancellationToken);
+    Task<List<GenreDto>> GetAllGenres(CancellationToken cancellationToken);
 
-    Task<List<Dictionary<string, GenreDto>>> GetCollections(CancellationToken cancellationToken);
+    Task<List<CollectionDto>> GetCollections(CancellationToken cancellationToken);
 
     /* Admin Rights */
     Task<GenreDto> CreateGenre(GenreCreateCommand genreCreateCommand, CancellationToken cancellationToken);

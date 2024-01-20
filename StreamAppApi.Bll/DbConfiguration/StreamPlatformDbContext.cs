@@ -17,6 +17,7 @@ public class StreamPlatformDbContext : DbContext //IdentityDbContext<Application
     public DbSet<MovieParameter> Parameters { get; set; }
     public DbSet<GenreMovie> GenreMovies { get; set; }
     public DbSet<ActorMovie> ActorMovies { get; set; }
+    public DbSet<UserMovie> UserMovies { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -28,7 +29,11 @@ public class StreamPlatformDbContext : DbContext //IdentityDbContext<Application
             });
         // Многие ко многим User & Movie (Favorites)
         modelBuilder.Entity<UserMovie>(
-            entity => { entity.HasKey(userMovie => new { userMovie.UserId, userMovie.MovieId }); });
+            entity =>
+            {
+                entity.ToTable("UserMovies");
+                entity.HasKey(userMovie => new { userMovie.UserId, userMovie.MovieId });
+            });
 
         modelBuilder.Entity<UserMovie>(
             entity =>
@@ -37,7 +42,7 @@ public class StreamPlatformDbContext : DbContext //IdentityDbContext<Application
                     .HasOne(userMovie => userMovie.User)
                     .WithMany(user => user.Favorites)
                     .HasForeignKey(userMovie => userMovie.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);;
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
         modelBuilder.Entity<UserMovie>(
@@ -47,7 +52,7 @@ public class StreamPlatformDbContext : DbContext //IdentityDbContext<Application
                     .HasOne(userMovie => userMovie.Movie)
                     .WithMany(movie => movie.Users)
                     .HasForeignKey(userMovie => userMovie.MovieId)
-                    .OnDelete(DeleteBehavior.Cascade);;
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
         ///////////////////////////
@@ -60,7 +65,11 @@ public class StreamPlatformDbContext : DbContext //IdentityDbContext<Application
             });
         // Многие ко многим Genre & Movie
         modelBuilder.Entity<GenreMovie>(
-            entity => { entity.HasKey(genreMovie => new { genreMovie.GenreId, genreMovie.MovieId }); });
+            entity =>
+            {
+                entity.ToTable("GenreMovies");
+                entity.HasKey(genreMovie => new { genreMovie.GenreId, genreMovie.MovieId });
+            });
 
         modelBuilder.Entity<GenreMovie>(
             entity =>
@@ -69,7 +78,7 @@ public class StreamPlatformDbContext : DbContext //IdentityDbContext<Application
                     .HasOne(genreMovie => genreMovie.Genre)
                     .WithMany(genre => genre.Movies)
                     .HasForeignKey(genreMovie => genreMovie.GenreId)
-                    .OnDelete(DeleteBehavior.Cascade);;
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
         modelBuilder.Entity<GenreMovie>(
@@ -79,7 +88,7 @@ public class StreamPlatformDbContext : DbContext //IdentityDbContext<Application
                     .HasOne(genreMovie => genreMovie.Movie)
                     .WithMany(movie => movie.Genres)
                     .HasForeignKey(genreMovie => genreMovie.MovieId)
-                    .OnDelete(DeleteBehavior.Cascade);;
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
         /////////////////////////////////////
@@ -92,7 +101,11 @@ public class StreamPlatformDbContext : DbContext //IdentityDbContext<Application
             });
         // Многие ко многим Actor & Movie
         modelBuilder.Entity<ActorMovie>(
-            entity => { entity.HasKey(genreMovie => new { genreMovie.ActorId, genreMovie.MovieId }); });
+            entity =>
+            {
+                entity.ToTable("ActorMovies");
+                entity.HasKey(genreMovie => new { genreMovie.ActorId, genreMovie.MovieId });
+            });
 
         modelBuilder.Entity<ActorMovie>(
             entity =>
@@ -101,7 +114,7 @@ public class StreamPlatformDbContext : DbContext //IdentityDbContext<Application
                     .HasOne(genreMovie => genreMovie.Actor)
                     .WithMany(actor => actor.Movies)
                     .HasForeignKey(actorMovie => actorMovie.ActorId)
-                    .OnDelete(DeleteBehavior.Cascade);;
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
         modelBuilder.Entity<ActorMovie>(
@@ -111,7 +124,7 @@ public class StreamPlatformDbContext : DbContext //IdentityDbContext<Application
                     .HasOne(actorMovie => actorMovie.Movie)
                     .WithMany(movie => movie.Actors)
                     .HasForeignKey(actorMovie => actorMovie.MovieId)
-                    .OnDelete(DeleteBehavior.Cascade);;
+                    .OnDelete(DeleteBehavior.Cascade);
             });
 
         ////////////////////////////////////////

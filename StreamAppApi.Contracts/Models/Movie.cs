@@ -68,6 +68,7 @@ public class Movie
 
     [Column("isSendTelegram")]
     public bool? IsSendTelegram { get; set; }
+
     public ICollection<UserMovie> Users { get; set; }
     public ICollection<GenreMovie> Genres { get; set; }
 

@@ -13,11 +13,16 @@ public class MovieService : IMovieService
 {
     private readonly StreamPlatformDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
+    private readonly TelegramBotService _telegramBotService;
 
-    public MovieService(StreamPlatformDbContext dbContext, IHttpContextAccessor httpContextAccessor)
+    public MovieService(
+        StreamPlatformDbContext dbContext,
+        IHttpContextAccessor httpContextAccessor,
+        TelegramBotOptions telegramBotOptions)
     {
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
+        _telegramBotService = new(telegramBotOptions);
     }
 
     public async Task<MovieDto> GetMovieBySlug(
@@ -32,15 +37,17 @@ public class MovieService : IMovieService
         var existingMovie = await _dbContext.Movies.AsNoTracking()
                 .Include(movie => movie.Users)
                 .Include(movie => movie.Parameters)
-                .Include(movie => movie.Actors).ThenInclude(actorMovie => actorMovie.Actor)
-                .Include(movie => movie.Genres).ThenInclude(genreMovie => genreMovie.Genre)
+                .Include(movie => movie.Actors)
+                .ThenInclude(actorMovie => actorMovie.Actor)
+                .Include(movie => movie.Genres)
+                .ThenInclude(genreMovie => genreMovie.Genre)
                 .FirstOrDefaultAsync(existingMovie => existingMovie.Slug == slug, cancellationToken)
             ?? throw new ArgumentException("Movie not found.");
 
         return MovieToDto(existingMovie);
     }
 
-    public async Task<List<Dictionary<string, MovieDto>>> GetMovieByActor(
+    public async Task<List<MovieDto>> GetMovieByActor(
         string actorId,
         CancellationToken cancellationToken = default)
     {
@@ -55,8 +62,10 @@ public class MovieService : IMovieService
                         .Any(a => a.ActorId == actorId))
                 .Include(movie => movie.Users)
                 .Include(movie => movie.Parameters)
-                .Include(movie => movie.Actors).ThenInclude(actorMovie => actorMovie.Actor)
-                .Include(movie => movie.Genres).ThenInclude(genreMovie => genreMovie.Genre)
+                .Include(movie => movie.Actors)
+                .ThenInclude(actorMovie => actorMovie.Actor)
+                .Include(movie => movie.Genres)
+                .ThenInclude(genreMovie => genreMovie.Genre)
                 .OrderByDescending(movie => movie.Rating)
                 .ToListAsync(cancellationToken)
             ?? throw new ArgumentException("Movie not found.");
@@ -64,7 +73,7 @@ public class MovieService : IMovieService
         return MapMoviesToDto(existingMovies);
     }
 
-    public async Task<List<Dictionary<string, MovieDto>>> GetMovieByGenres(
+    public async Task<List<MovieDto>> GetMovieByGenres(
         MovieByGenresCommand genreIds,
         CancellationToken cancellationToken = default)
     {
@@ -75,8 +84,10 @@ public class MovieService : IMovieService
 
         var existingMovies = await _dbContext.Movies.AsNoTracking()
                 .Include(movie => movie.Parameters)
-                .Include(movie => movie.Actors).ThenInclude(actorMovie => actorMovie.Actor)
-                .Include(movie => movie.Genres).ThenInclude(genreMovie => genreMovie.Genre)
+                .Include(movie => movie.Actors)
+                .ThenInclude(actorMovie => actorMovie.Actor)
+                .Include(movie => movie.Genres)
+                .ThenInclude(genreMovie => genreMovie.Genre)
                 .OrderByDescending(movie => movie.Rating)
                 .Where(movie => movie.Genres.Any(genre => genreIds.genreIds.Contains(genre.GenreId)))
                 .ToListAsync(cancellationToken)
@@ -97,8 +108,10 @@ public class MovieService : IMovieService
         var existingMovie = await _dbContext.Movies
             .Include(movie => movie.Users)
             .Include(movie => movie.Parameters)
-            .Include(movie => movie.Actors).ThenInclude(actorMovie => actorMovie.Actor)
-            .Include(movie => movie.Genres).ThenInclude(genreMovie => genreMovie.Genre)
+            .Include(movie => movie.Actors)
+            .ThenInclude(actorMovie => actorMovie.Actor)
+            .Include(movie => movie.Genres)
+            .ThenInclude(genreMovie => genreMovie.Genre)
             .FirstOrDefaultAsync(m => m.Slug == updateCountOpenedCommand.slug, cancellationToken);
 
         if (existingMovie != null)
@@ -114,7 +127,7 @@ public class MovieService : IMovieService
         return MovieToDto(existingMovie);
     }
 
-    public async Task<List<Dictionary<string, MovieDto>>> GetAllMovies(CancellationToken cancellationToken = default)
+    public async Task<List<MovieDto>> GetAllMovies(CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
         {
@@ -135,8 +148,10 @@ public class MovieService : IMovieService
             .AsNoTracking()
             .Include(movie => movie.Users)
             .Include(movie => movie.Parameters)
-            .Include(movie => movie.Actors).ThenInclude(actorMovie => actorMovie.Actor)
-            .Include(movie => movie.Genres).ThenInclude(genreMovie => genreMovie.Genre)
+            .Include(movie => movie.Actors)
+            .ThenInclude(actorMovie => actorMovie.Actor)
+            .Include(movie => movie.Genres)
+            .ThenInclude(genreMovie => genreMovie.Genre)
             .OrderByDescending(movie => movie.Rating)
             .ToListAsync(cancellationToken);
 
@@ -158,9 +173,13 @@ public class MovieService : IMovieService
             await _dbContext.Movies
                 .Include(movie => movie.Users)
                 .Include(movie => movie.Parameters)
-                .Include(movie => movie.Actors).ThenInclude(actorMovie => actorMovie.Actor)
-                .Include(movie => movie.Genres).ThenInclude(genreMovie => genreMovie.Genre)
-                .FirstOrDefaultAsync(movie => movie.Slug == movieCreateCommand.slug.ToLower());
+                .Include(movie => movie.Actors)
+                .ThenInclude(actorMovie => actorMovie.Actor)
+                .Include(movie => movie.Genres)
+                .ThenInclude(genreMovie => genreMovie.Genre)
+                .FirstOrDefaultAsync(
+                    movie => movie.Slug == movieCreateCommand.slug.ToLower(),
+                    cancellationToken);
 
         if (findMovie != null)
         {
@@ -171,6 +190,8 @@ public class MovieService : IMovieService
 
         _dbContext.Parameters.Add(newMovie.Parameters);
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        _telegramBotService.SendPostLink(newMovie.Title, newMovie.Poster);
 
         return MovieToDto(newMovie);
     }
@@ -187,8 +208,10 @@ public class MovieService : IMovieService
         var existingMovie = await _dbContext.Movies.AsNoTracking()
                 .Include(movie => movie.Users)
                 .Include(movie => movie.Parameters)
-                .Include(movie => movie.Actors).ThenInclude(actorMovie => actorMovie.Actor)
-                .Include(movie => movie.Genres).ThenInclude(genreMovie => genreMovie.Genre)
+                .Include(movie => movie.Actors)
+                .ThenInclude(actorMovie => actorMovie.Actor)
+                .Include(movie => movie.Genres)
+                .ThenInclude(genreMovie => genreMovie.Genre)
                 .FirstOrDefaultAsync(
                     existingMovie =>
                         existingMovie.MovieId == id,
@@ -211,8 +234,10 @@ public class MovieService : IMovieService
         var movieToUpdate = await _dbContext.Movies.AsNoTracking()
             .Include(movie => movie.Users)
             .Include(movie => movie.Parameters)
-            .Include(movie => movie.Actors).ThenInclude(actorMovie => actorMovie.Actor)
-            .Include(movie => movie.Genres).ThenInclude(genreMovie => genreMovie.Genre)
+            .Include(movie => movie.Actors)
+            .ThenInclude(actorMovie => actorMovie.Actor)
+            .Include(movie => movie.Genres)
+            .ThenInclude(genreMovie => genreMovie.Genre)
             .FirstOrDefaultAsync(movieToUpdate => movieToUpdate.MovieId == id, cancellationToken);
 
         if (movieToUpdate == null)
@@ -223,7 +248,7 @@ public class MovieService : IMovieService
         UpdateMovieHelper(movieToUpdate, movieUpdateCommand);
         _dbContext.Movies.Update(movieToUpdate);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        
+
         return MovieToDto(movieToUpdate);
     }
 
@@ -238,8 +263,10 @@ public class MovieService : IMovieService
 
         var existingMovie = await _dbContext.Movies.AsNoTracking()
             .Include(movie => movie.Parameters)
-            .Include(movie => movie.Actors).ThenInclude(actorMovie => actorMovie.Actor)
-            .Include(movie => movie.Genres).ThenInclude(genreMovie => genreMovie.Genre)
+            .Include(movie => movie.Actors)
+            .ThenInclude(actorMovie => actorMovie.Actor)
+            .Include(movie => movie.Genres)
+            .ThenInclude(genreMovie => genreMovie.Genre)
             .FirstOrDefaultAsync(existingMovie => existingMovie.MovieId == id, cancellationToken);
 
         if (existingMovie == null)
@@ -253,46 +280,21 @@ public class MovieService : IMovieService
         return MovieToDto(existingMovie);
     }
 
-    public async Task<List<Dictionary<string, MovieDto>>> GetMostPopularAsync(
-        CancellationToken cancellationToken = default)
+    public async Task<List<MovieDto>> GetMostPopularAsync(CancellationToken cancellationToken = default)
     {
         var popularMovies = await _dbContext.Movies
             .Where(m => m.CountOpened > 0)
             .OrderByDescending(m => m.CountOpened)
             .Include(movie => movie.Users)
             .Include(movie => movie.Parameters)
-            .Include(movie => movie.Actors).ThenInclude(actorMovie => actorMovie.Actor)
-            .Include(movie => movie.Genres).ThenInclude(genreMovie => genreMovie.Genre)
+            .Include(movie => movie.Actors)
+            .ThenInclude(actorMovie => actorMovie.Actor)
+            .Include(movie => movie.Genres)
+            .ThenInclude(genreMovie => genreMovie.Genre)
             .OrderByDescending(movie => movie.Rating)
             .ToListAsync(cancellationToken);
 
         return MapMoviesToDto(popularMovies);
-    }
-
-    public async Task<MovieDto> UpdateRatingAsync(
-        string movieId,
-        double newRating,
-        CancellationToken cancellationToken = default)
-    {
-        var movie = await _dbContext.Movies
-            .Include(movie => movie.Users)
-            .Include(movie => movie.Parameters)
-            .Include(movie => movie.Actors).ThenInclude(actorMovie => actorMovie.Actor)
-            .Include(movie => movie.Genres).ThenInclude(genreMovie => genreMovie.Genre)
-            .FirstOrDefaultAsync(m => m.MovieId == movieId);
-
-        if (movie != null)
-        {
-            movie.Rating = newRating;
-            _dbContext.Movies.Update(movie);
-            await _dbContext.SaveChangesAsync();
-        }
-        else
-        {
-            throw new ArgumentException("Movie not fount.");
-        }
-
-        return MovieToDto(movie);
     }
 
     // Helpful methods
@@ -307,10 +309,7 @@ public class MovieService : IMovieService
             movieCreateCommand.slug,
             movieCreateCommand.rating ?? 4.0,
             movieCreateCommand.countOpened ?? 0,
-            movieCreateCommand.isSendTelegram ?? false)
-        {
-            Parameters = DtoToParamrters(movieCreateCommand.parameters)
-        };
+            movieCreateCommand.isSendTelegram ?? false) { Parameters = DtoToParameters(movieCreateCommand.parameters) };
         newMovie.Genres = MapGenresArrToList(newMovie, movieCreateCommand.genres);
         newMovie.Actors = MapActorsArrToList(newMovie, movieCreateCommand.actors);
         _dbContext.Movies.Add(newMovie);
@@ -320,15 +319,16 @@ public class MovieService : IMovieService
 
     private List<GenreMovie> MapGenresArrToList(Movie movie, string[] genres)
     {
-        List<GenreMovie> listGenres = new List<GenreMovie>();
+        var listGenres = new List<GenreMovie>();
 
         foreach (var genreId in genres)
         {
-            GenreMovie newGenreMovie = new GenreMovie()
+            var newGenreMovie = new GenreMovie
             {
-                Movie = movie, 
+                Movie = movie,
                 //MovieId = movie.MovieId,
-                Genre = _dbContext.Genres.First(genre => genre.GenreId.Contains(genreId)),
+                Genre = _dbContext.Genres.FirstOrDefault(genre => genre.GenreId.Contains(genreId))
+                    ?? throw new ArgumentException("Movie with this Id don't exist")
                 //GenreId = genreId
             };
             _dbContext.GenreMovies.Add(newGenreMovie);
@@ -340,16 +340,17 @@ public class MovieService : IMovieService
 
     private List<ActorMovie> MapActorsArrToList(Movie movie, string[] actors)
     {
-        List<ActorMovie> listActors = new List<ActorMovie>();
+        var listActors = new List<ActorMovie>();
 
         foreach (var actorId in actors)
         {
-            ActorMovie newActorMovie = new ActorMovie()
+            var newActorMovie = new ActorMovie
             {
                 //MovieId = movie.MovieId, 
                 Movie = movie,
                 //ActorId = actorId
-                Actor = _dbContext.Actors.First(actor => actor.ActorId.Contains(actorId)) ?? throw new Exception("Not found Actor")
+                Actor = _dbContext.Actors.First(actor => actor.ActorId.Contains(actorId))
+                    ?? throw new ArgumentException("Not found Actor")
             };
             _dbContext.ActorMovies.Add(newActorMovie);
             listActors.Add(newActorMovie);
@@ -370,17 +371,17 @@ public class MovieService : IMovieService
         movieToUpdate.IsSendTelegram = movieUpdateCommand.isSendTelegram ?? movieToUpdate.IsSendTelegram;
     }
 
-    private ParameterDto ParamrtersToDto(MovieParameter parameters)
+    public static ParameterDto ParametersToDto(MovieParameter parameters)
     {
         return new(parameters.Year, parameters.Duration, parameters.Country);
     }
 
-    private MovieParameter DtoToParamrters(ParameterDto parametersDto)
+    public static MovieParameter DtoToParameters(ParameterDto parametersDto)
     {
         return new(parametersDto.year, parametersDto.duration, parametersDto.country);
     }
 
-    private MovieDto MovieToDto(Movie movie)
+    public static MovieDto MovieToDto(Movie movie)
     {
         return new(
             movie.MovieId,
@@ -389,48 +390,21 @@ public class MovieService : IMovieService
             movie.Title,
             movie.VideoUrl,
             movie.Slug,
-            ParamrtersToDto(movie.Parameters),
-            MapGenresToDto(movie.Genres),
-            MapActorsToDto(movie.Actors),
+            ParametersToDto(movie.Parameters),
+            GenreService.MapGenresToDto(movie.Genres),
+            ActorService.MapActorsToDto(movie.Actors),
             movie.Rating,
             movie.CountOpened,
             movie.IsSendTelegram);
     }
-    
-    private List<GenreDto> MapGenresToDto(ICollection<GenreMovie> genres)
+
+    public static List<MovieDto> MapMoviesToDto(List<Movie> movies)
     {
-        List<GenreDto> genresListDto = new();
-
-        foreach (var genre in genres)
-        {
-            var genreDto = GenreService.GenreToDto(genre.Genre);
-            genresListDto.Add(genreDto);
-        }
-
-        return genresListDto;
-    }
-    
-    private List<ActorDto> MapActorsToDto(ICollection<ActorMovie> actors)
-    {
-        List<ActorDto> actorsListDto = new();
-
-        foreach (var actor in actors)
-        {
-            var actorDto = ActorService.ActorToDto(actor.Actor);
-            actorsListDto.Add(actorDto);
-        }
-
-        return actorsListDto;
-    }
-    
-    private List<Dictionary<string, MovieDto>> MapMoviesToDto(List<Movie> movies)
-    {
-        List<Dictionary<string, MovieDto>> moviesListDto = new();
+        List<MovieDto> moviesListDto = new();
 
         foreach (var movie in movies)
         {
-            var movieDict = new Dictionary<string, MovieDto> { { "movie", MovieToDto(movie) } };
-            moviesListDto.Add(movieDict);
+            moviesListDto.Add(MovieToDto(movie));
         }
 
         return moviesListDto;

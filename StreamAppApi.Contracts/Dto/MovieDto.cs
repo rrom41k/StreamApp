@@ -10,6 +10,6 @@ public record MovieDto(
     ParameterDto parameters,
     List<GenreDto> genres,
     List<ActorDto> actors,
-double? rating,
+    double? rating,
     int? countOpened,
     bool? isSendTelegram);

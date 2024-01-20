@@ -15,7 +15,7 @@ public class FileService : IFileService
         _hostingEnvironment = hostingEnvironment ?? throw new ArgumentNullException(nameof(hostingEnvironment));
     }
 
-    public async Task<Dictionary<string, FileDto>> SaveFiles(
+    public async Task<List<FileDto>> SaveFiles(
         FilesAddCommand filesAddCommand,
         CancellationToken cancellationToken)
     {
@@ -24,7 +24,7 @@ public class FileService : IFileService
             throw new OperationCanceledException();
         }
 
-        Dictionary<string, FileDto> result = new();
+        List<FileDto> result = new();
 
         foreach (var file in filesAddCommand.files)
         {
@@ -50,7 +50,7 @@ public class FileService : IFileService
                 await file.CopyToAsync(stream, cancellationToken);
             }
 
-            result.Add("file", new(Path.Combine(uploadsFolder, fileName).Replace("\\", "/"), fileName));
+            result.Add(new(Path.Combine(uploadsFolder, fileName).Replace("\\", "/"), fileName));
         }
 
         return result;

@@ -74,7 +74,7 @@ public class UserService : IUserService
         return usersCount;
     }
 
-    public async Task<List<Dictionary<string, UserDto>>> GetAllUsers(CancellationToken cancellationToken = default)
+    public async Task<List<UserDto>> GetAllUsers(CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
         {
@@ -109,6 +109,64 @@ public class UserService : IUserService
         var existingUserDto = new UserDto(existingUser.UserId, existingUser.Email, existingUser.IsAdmin);
 
         return existingUserDto;
+    }
+
+    public async Task<List<MovieDto>> GetFavorites(string id, CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException();
+        }
+
+        var data = await _dbContext.UserMovies.AsNoTracking()
+                .Include(um => um.Movie)
+                .Include(um => um.Movie.Parameters)
+                .Include(um => um.Movie.Genres)
+                .ThenInclude(gm => gm.Genre)
+                .Include(um => um.Movie.Actors)
+                .ThenInclude(am => am.Actor)
+                .Where(um => um.UserId == id)
+                .ToListAsync(cancellationToken)
+            ?? throw new ArgumentException("User not found.");
+
+        var favorites = new List<Movie>();
+
+        foreach (var movie in data)
+        {
+            favorites.Add(movie.Movie);
+        }
+
+        return MovieService.MapMoviesToDto(favorites);
+    }
+
+    public async Task UpdateFavorites(
+        string userId,
+        UserFavoritesUpdateCommand userFavoritesUpdateCommand,
+        CancellationToken cancellationToken = default)
+    {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            throw new OperationCanceledException();
+        }
+
+        var data = await _dbContext.UserMovies
+                .Where(um => um.UserId == userId)
+                .ToListAsync(cancellationToken)
+            ?? throw new ArgumentException("User not found.");
+
+        var checkMovie = data.FirstOrDefault(um => um.MovieId == userFavoritesUpdateCommand.movieId);
+
+        if (checkMovie != null)
+        {
+            _dbContext.UserMovies.Remove(checkMovie);
+        }
+        else
+        {
+            var newFavorMovie = new UserMovie { UserId = userId, MovieId = userFavoritesUpdateCommand.movieId };
+            _dbContext.UserMovies.Add(newFavorMovie);
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
     }
 
     public async Task<UserDto> UpdateUser(
@@ -173,15 +231,14 @@ public class UserService : IUserService
         user.IsAdmin = updateUserData.isAdmin ?? user.IsAdmin;
     }
 
-    private List<Dictionary<string, UserDto>> MapUsersToDTO(List<User> users)
+    private List<UserDto> MapUsersToDTO(List<User> users)
     {
-        List<Dictionary<string, UserDto>> userListDTO = new();
+        List<UserDto> userListDTO = new();
 
         foreach (var user in users)
         {
             var userDTO = new UserDto(user.UserId, user.Email, user.IsAdmin);
-            var userDict = new Dictionary<string, UserDto> { { "user", userDTO } };
-            userListDTO.Add(userDict);
+            userListDTO.Add(userDTO);
         }
 
         return userListDTO;

@@ -7,7 +7,7 @@ public interface IActorService
 {
     Task<ActorDto> GetActorBySlug(string slug, CancellationToken cancellationToken);
 
-    Task<List<Dictionary<string, ActorDto>>> GetAllActors(CancellationToken cancellationToken);
+    Task<List<object>> GetAllActors(CancellationToken cancellationToken);
 
     /* Admin Rights */
     Task<ActorDto> CreateActor(ActorCreateCommand actorCreateCommand, CancellationToken cancellationToken);

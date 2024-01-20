@@ -40,7 +40,7 @@ public class ActorService : IActorService
         return ActorToDto(existingActor);
     }
 
-    public async Task<List<Dictionary<string, ActorDto>>> GetAllActors(CancellationToken cancellationToken = default)
+    public async Task<List<object>> GetAllActors(CancellationToken cancellationToken = default)
     {
         if (cancellationToken.IsCancellationRequested)
         {
@@ -167,14 +167,35 @@ public class ActorService : IActorService
             actor.Photo);
     }
 
-    private List<Dictionary<string, ActorDto>> MapActorsToDto(List<Actor> actors)
+    private List<object> MapActorsToDto(List<Actor> actors)
     {
-        List<Dictionary<string, ActorDto>> actorsListDto = new();
+        List<object> actorsListDto = new();
 
         foreach (var actor in actors)
         {
-            var actorDict = new Dictionary<string, ActorDto> { { "actor", ActorToDto(actor) } };
-            actorsListDto.Add(actorDict);
+            var newActor =
+                new
+                {
+                    _id = actor.ActorId,
+                    name = actor.Name,
+                    slug = actor.Slug,
+                    photo = actor.Photo,
+                    countMovies = _dbContext.ActorMovies.Count(am => am.ActorId == actor.ActorId)
+                };
+            actorsListDto.Add(newActor);
+        }
+
+        return actorsListDto;
+    }
+
+    public static List<ActorDto> MapActorsToDto(ICollection<ActorMovie> actors)
+    {
+        List<ActorDto> actorsListDto = new();
+
+        foreach (var actor in actors)
+        {
+            var actorDto = ActorToDto(actor.Actor);
+            actorsListDto.Add(actorDto);
         }
 
         return actorsListDto;

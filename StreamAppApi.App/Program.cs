@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using StreamAppApi.Bll;
 using StreamAppApi.Bll.DbConfiguration;
 using StreamAppApi.Contracts.Interfaces;
+using StreamAppApi.Contracts.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -30,6 +31,10 @@ builder.Services.AddDbContext<StreamPlatformDbContext>(
         options.UseNpgsql(connectionString);
     });
 
+var telegramBotOptions = new TelegramBotOptions();
+builder.Configuration.GetSection("TelegramBot").Bind(telegramBotOptions);
+builder.Services.AddSingleton(telegramBotOptions);
+
 var appSettingsToken = builder.Configuration.GetValue<string>("AppSettings:Token");
 builder.Services.AddSingleton(appSettingsToken);
 
@@ -40,6 +45,7 @@ builder.Services.AddScoped<IGenreService, GenreService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<IActorService, ActorService>();
 builder.Services.AddScoped<IMovieService, MovieService>();
+builder.Services.AddScoped<IRatingService, RatingService>();
 builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddSwaggerGen(

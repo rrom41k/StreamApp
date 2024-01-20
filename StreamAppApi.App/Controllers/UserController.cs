@@ -61,10 +61,50 @@ public class UserController : ControllerBase
         }
     }
 
+    // GET: api/users/profile/favorites
+    [HttpGet("profile/favorites")]
+    public async Task<IActionResult> GetFavorites()
+    {
+        var cancellationToken = HttpContext?.RequestAborted ?? default;
+
+        try
+        {
+            var userId = User.FindFirst("_id")?.Value;
+
+            var favorites = await _userService.GetFavorites(userId, cancellationToken);
+
+            return Ok(new { favorites });
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
+    // PUT: api/users/profile/favorites
+    [HttpPut("profile/favorites")]
+    public async Task<IActionResult> PutFavorites([FromBody] UserFavoritesUpdateCommand userFavoritesUpdateCommand)
+    {
+        var cancellationToken = HttpContext?.RequestAborted ?? default;
+
+        try
+        {
+            var userId = User.FindFirst("_id")?.Value;
+            await _userService.UpdateFavorites(userId, userFavoritesUpdateCommand, cancellationToken);
+
+            return Ok();
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ex.Message);
+        }
+    }
+
     /* Admin Rights */
 
     // POST: api/users
     [HttpPost]
+    [Authorize(Roles = "Admin")]
     public async Task<IActionResult> Post([FromBody] UserCreateCommand userCreateCommand)
     {
         var cancellationToken = HttpContext?.RequestAborted ?? default;
