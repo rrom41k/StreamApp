@@ -1,7 +1,7 @@
 namespace StreamAppApi.Contracts.Dto;
 
 public record MovieDto(
-    string movieId,
+    string _id,
     string poster,
     string bigPoster,
     string title,
