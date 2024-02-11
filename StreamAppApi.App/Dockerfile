@@ -1,12 +1,14 @@
-﻿FROM mcr.microsoft.com/dotnet/aspnet:6.0 AS base
+﻿FROM mcr.microsoft.com/dotnet/aspnet:7.0 AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
 
-FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
 COPY ["StreamAppApi.App/StreamAppApi.App.csproj", "StreamAppApi.App/"]
+COPY ["StreamAppApi.Bll/StreamAppApi.Bll.csproj", "StreamAppApi.Bll/"]
+COPY ["StreamAppApi.Contracts/StreamAppApi.Contracts.csproj", "StreamAppApi.Contracts/"]
 RUN dotnet restore "StreamAppApi.App/StreamAppApi.App.csproj"
 COPY . .
 WORKDIR "/src/StreamAppApi.App"

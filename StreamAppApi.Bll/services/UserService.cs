@@ -220,14 +220,17 @@ public class UserService : IUserService
 
     private void UpdateUserHelper(User user, UserUpdateCommand updateUserData)
     {
-        CreatePasswordHash(updateUserData.password, out var passwordHash, out var passwordSalt);
         user.Email = updateUserData.email ?? user.Email;
-        user.PasswordHash = updateUserData.password == null || updateUserData.password == ""
-            ? user.PasswordHash
-            : passwordHash;
-        user.PasswordSalt = updateUserData.password == null || updateUserData.password == ""
-            ? user.PasswordSalt
-            : passwordSalt;
+
+        var password = updateUserData.password;
+
+        if (!string.IsNullOrEmpty(password))
+        {
+            CreatePasswordHash(updateUserData.password, out var passwordHash, out var passwordSalt);
+            user.PasswordHash = passwordHash;
+            user.PasswordSalt = passwordSalt;
+        }
+
         user.IsAdmin = updateUserData.isAdmin ?? user.IsAdmin;
     }
 
