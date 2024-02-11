@@ -73,7 +73,7 @@ public class UserController : ControllerBase
 
             var favorites = await _userService.GetFavorites(userId, cancellationToken);
 
-            return Ok(new { favorites });
+            return Ok(favorites);
         }
         catch (Exception ex)
         {
