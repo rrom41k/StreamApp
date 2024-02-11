@@ -41,7 +41,9 @@ public class AuthService : IAuthService
         {
             throw new OperationCanceledException();
         }
-
+        
+        
+        
         CreatePasswordHash(authRegisterCommand.password, out var passwordHash, out var passwordSalt);
         User newUser = new(authRegisterCommand.email, passwordHash, passwordSalt);
 
@@ -59,7 +61,7 @@ public class AuthService : IAuthService
     {
         var user = await _dbContext.Users.FirstOrDefaultAsync(
             user => user.Email == authLoginCommandCommand.email,
-            cancellationToken);
+            cancellationToken) ?? throw new AuthenticationException("User not found");
 
         if (!VerifyPasswordHash(authLoginCommandCommand.password, user.PasswordHash, user.PasswordSalt))
         {

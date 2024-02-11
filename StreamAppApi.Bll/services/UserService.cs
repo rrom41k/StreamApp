@@ -187,7 +187,7 @@ public class UserService : IUserService
             throw new ArgumentException("User not found.");
         }
 
-        UpdateUserHelper(userToUpdate, updateUserData);
+        userToUpdate = UpdateUserHelper(userToUpdate, updateUserData);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         var updatedUserDto = new UserDto(userToUpdate.UserId, userToUpdate.Email, userToUpdate.IsAdmin);
@@ -218,7 +218,7 @@ public class UserService : IUserService
         return removedUser;
     }
 
-    private void UpdateUserHelper(User user, UserUpdateCommand updateUserData)
+    private User UpdateUserHelper(User user, UserUpdateCommand updateUserData)
     {
         user.Email = string.IsNullOrEmpty(updateUserData.email) ? user.Email : updateUserData.email;
         
@@ -230,6 +230,8 @@ public class UserService : IUserService
         }
 
         user.IsAdmin = updateUserData.isAdmin ?? user.IsAdmin;
+        
+        return user;
     }
 
     private List<UserDto> MapUsersToDTO(List<User> users)

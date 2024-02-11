@@ -40,7 +40,7 @@ public class AuthController : ControllerBase
 
             return Ok(result);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
@@ -67,7 +67,7 @@ public class AuthController : ControllerBase
 
             return Ok(result);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex)
         {
             return BadRequest(ex.Message);
         }
