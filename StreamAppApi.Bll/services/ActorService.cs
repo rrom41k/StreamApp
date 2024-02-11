@@ -11,19 +11,15 @@ namespace StreamAppApi.Bll;
 
 public class ActorService : IActorService
 {
-    private readonly string _appSetTok;
     private readonly StreamPlatformDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public ActorService(
-        string appSettingsToken,
         StreamPlatformDbContext dbContext,
-        IHttpContextAccessor httpContextAccessor,
-        string appSetTok)
+        IHttpContextAccessor httpContextAccessor)
     {
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
-        _appSetTok = appSetTok;
     }
 
     public async Task<ActorDto> GetActorBySlug(string slug, CancellationToken cancellationToken = default)

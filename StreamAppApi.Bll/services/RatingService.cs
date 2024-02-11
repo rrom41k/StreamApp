@@ -119,7 +119,7 @@ public class RatingService : IRatingService
                 }
             }
 
-            return totalRating ?? 0 / countUsers ?? 1;
+            return (totalRating ?? 0) / (countUsers ?? 1);
         }
 
         // Возвращайте значение по умолчанию, например, 0, если нет рейтингов для данного фильма.

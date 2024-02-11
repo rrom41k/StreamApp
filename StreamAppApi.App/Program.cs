@@ -35,9 +35,6 @@ var telegramBotOptions = new TelegramBotOptions();
 builder.Configuration.GetSection("TelegramBot").Bind(telegramBotOptions);
 builder.Services.AddSingleton(telegramBotOptions);
 
-var appSettingsToken = builder.Configuration.GetValue<string>("AppSettings:Token");
-builder.Services.AddSingleton(appSettingsToken);
-
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IUserService, UserService>();

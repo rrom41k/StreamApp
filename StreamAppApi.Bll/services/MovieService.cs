@@ -361,27 +361,42 @@ public class MovieService : IMovieService
 
     private void UpdateMovieHelper(Movie movieToUpdate, MovieUpdateCommand movieUpdateCommand)
     {
-        movieToUpdate.Poster = movieUpdateCommand.poster ?? movieToUpdate.Poster;
-        movieToUpdate.BigPoster = movieUpdateCommand.bigPoster ?? movieToUpdate.BigPoster;
-        movieToUpdate.Title = movieUpdateCommand.title ?? movieToUpdate.Title;
-        movieToUpdate.VideoUrl = movieUpdateCommand.videoUrl ?? movieToUpdate.VideoUrl;
-        movieToUpdate.Slug = movieUpdateCommand.slug?.ToLower() ?? movieToUpdate.Slug;
+        movieToUpdate.Poster = string.IsNullOrEmpty(movieUpdateCommand.poster) ? movieToUpdate.Poster 
+            : movieUpdateCommand.poster;
+        
+        movieToUpdate.BigPoster = string.IsNullOrEmpty(movieUpdateCommand.bigPoster) ? movieToUpdate.BigPoster
+            : movieUpdateCommand.bigPoster;
+        
+        movieToUpdate.Title = string.IsNullOrEmpty(movieUpdateCommand.title) ? movieToUpdate.Title 
+            : movieUpdateCommand.title;
+        
+        movieToUpdate.VideoUrl = string.IsNullOrEmpty(movieUpdateCommand.videoUrl) ? movieToUpdate.VideoUrl
+            : movieUpdateCommand.videoUrl;
+        
+        movieToUpdate.Slug = string.IsNullOrEmpty(movieUpdateCommand.slug) ? movieToUpdate.Slug 
+            : movieUpdateCommand.slug.ToLower();
+        
+        movieToUpdate.Parameters = movieUpdateCommand.parameters == null ? movieToUpdate.Parameters 
+            : DtoToParameters(movieUpdateCommand.parameters);
+        
         movieToUpdate.Rating = movieUpdateCommand.rating ?? movieToUpdate.Rating;
+        
         movieToUpdate.CountOpened = movieUpdateCommand.countOpened ?? movieToUpdate.CountOpened;
+        
         movieToUpdate.IsSendTelegram = movieUpdateCommand.isSendTelegram ?? movieToUpdate.IsSendTelegram;
     }
 
-    public static ParameterDto ParametersToDto(MovieParameter parameters)
+    static ParameterDto ParametersToDto(MovieParameter parameters)
     {
         return new(parameters.Year, parameters.Duration, parameters.Country);
     }
 
-    public static MovieParameter DtoToParameters(ParameterDto parametersDto)
+    static MovieParameter DtoToParameters(ParameterDto parametersDto)
     {
         return new(parametersDto.year, parametersDto.duration, parametersDto.country);
     }
 
-    public static MovieDto MovieToDto(Movie movie)
+    static MovieDto MovieToDto(Movie movie)
     {
         return new(
             movie.MovieId,

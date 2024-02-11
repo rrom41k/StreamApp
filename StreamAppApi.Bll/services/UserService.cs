@@ -220,11 +220,9 @@ public class UserService : IUserService
 
     private void UpdateUserHelper(User user, UserUpdateCommand updateUserData)
     {
-        user.Email = updateUserData.email ?? user.Email;
-
-        var password = updateUserData.password;
-
-        if (!string.IsNullOrEmpty(password))
+        user.Email = string.IsNullOrEmpty(updateUserData.email) ? user.Email : updateUserData.email;
+        
+        if (!string.IsNullOrEmpty(updateUserData.password))
         {
             CreatePasswordHash(updateUserData.password, out var passwordHash, out var passwordSalt);
             user.PasswordHash = passwordHash;

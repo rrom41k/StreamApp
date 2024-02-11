@@ -14,7 +14,7 @@ public class GenreService : IGenreService
     private readonly StreamPlatformDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
-    public GenreService(StreamPlatformDbContext dbContext, IHttpContextAccessor httpContextAccessor, string appSetTok)
+    public GenreService(StreamPlatformDbContext dbContext, IHttpContextAccessor httpContextAccessor)
     {
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
@@ -180,10 +180,16 @@ public class GenreService : IGenreService
 
     private void UpdateGenreHelper(Genre genreToUpdate, GenreUpdateCommand genreUpdateCommand)
     {
-        genreToUpdate.Name = genreUpdateCommand.name ?? genreToUpdate.Name;
-        genreToUpdate.Slug = genreUpdateCommand.slug.ToLower() ?? genreToUpdate.Slug;
-        genreToUpdate.Description = genreUpdateCommand.description ?? genreToUpdate.Description;
-        genreToUpdate.Icon = genreUpdateCommand.icon ?? genreToUpdate.Icon;
+        genreToUpdate.Name = string.IsNullOrEmpty(genreUpdateCommand.name) ? genreToUpdate.Name : 
+            genreUpdateCommand.name;
+        
+        genreToUpdate.Slug = string.IsNullOrEmpty(genreUpdateCommand.slug.ToLower()) ? genreToUpdate.Slug : 
+            genreUpdateCommand.slug.ToLower();
+        
+        genreToUpdate.Description = string.IsNullOrEmpty(genreUpdateCommand.description)? genreToUpdate.Description : 
+            genreUpdateCommand.description;
+        
+        genreToUpdate.Icon = string.IsNullOrEmpty(genreUpdateCommand.icon)? genreToUpdate.Icon : genreUpdateCommand.icon;
     }
 
     public static GenreDto GenreToDto(Genre genre)

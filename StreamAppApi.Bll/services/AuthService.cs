@@ -6,6 +6,7 @@ using System.Text;
 
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 
 using StreamAppApi.Bll.DbConfiguration;
@@ -18,18 +19,18 @@ namespace StreamAppApi.Bll;
 
 public class AuthService : IAuthService
 {
-    private readonly string _appSetTok;
+    private readonly IConfiguration _configuration;
     private readonly StreamPlatformDbContext _dbContext;
     private readonly IHttpContextAccessor _httpContextAccessor;
 
     public AuthService(
-        string appSettingsToken,
+        IConfiguration configuration,
         StreamPlatformDbContext dbContext,
         IHttpContextAccessor httpContextAccessor)
     {
         _dbContext = dbContext;
         _httpContextAccessor = httpContextAccessor;
-        _appSetTok = appSettingsToken;
+        _configuration = configuration;
     }
 
     public async Task<ResultAuthDto> RegisterUser(
@@ -70,7 +71,6 @@ public class AuthService : IAuthService
         return CreateResult(user, accessToken, refreshToken);
     }
 
-    //public async Task<ResultAuthDto> GetNewTokens(AuthGetNewTokensCommand? getNewTokensCommand,CancellationToken cancellationToken = default)
     public async Task<ResultAuthDto> GetNewTokens(CancellationToken cancellationToken = default)
     {
         // Получаем refresh токен из запроса или из Cookie, если ничего не было передано в body
@@ -161,7 +161,7 @@ public class AuthService : IAuthService
             new(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User")
         };
 
-        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_appSetTok));
+        var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["AppSettings:Token"]));
 
         var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256Signature);
 
@@ -178,7 +178,7 @@ public class AuthService : IAuthService
     private ClaimsPrincipal ValidateToken(string? token)
     {
         var tokenHandler = new JwtSecurityTokenHandler();
-        var key = Encoding.UTF8.GetBytes(_appSetTok);
+        var key = Encoding.UTF8.GetBytes(_configuration["AppSettings:Token"]);
 
         try
         {
@@ -203,44 +203,3 @@ public class AuthService : IAuthService
         }
     }
 }
-
-/*private RefreshToken GenerateRefreshToken()
-{
-    var refreshToken = new RefreshToken
-    {
-        Token = Convert.ToBase64String(RandomNumberGenerator.GetBytes(64)),
-        Expires = DateTime.UtcNow.AddDays(7),
-        Created = DateTime.UtcNow
-    };
-    return refreshToken;
-}*/
-/*public async Task<object> RefreshToken(CancellationToken cancellationToken = default)
-{
-    var refreshToken = _httpContextAccessor.HttpContext.Request.Cookies["refreshToken"]; // получаем refreshToken из куки
-
-    var logUser = await _dbContext.Users.FirstOrDefaultAsync(user => user.RefreshToken == refreshToken, cancellationToken); // поиск пользователя с заданным refreshToken
-
-    // Валидация полученных данных
-    if (logUser == null)
-        throw new UnauthorizedAccessException("Invalid Refresh Token.");
-    if (logUser.TokenExpires < DateTime.UtcNow)
-        throw new InvalidDataException("Token expired.");
-
-    //генерация новых токенов
-
-    //string accessToken = CreateToken(logUser);
-    //var newRefreshToken = GenerateRefreshToken();
-
-    IssueTokenPair(logUser.ActorId, out string accessToken, out RefreshToken newRefreshToken);
-
-    SetRefreshToken(newRefreshToken, logUser);
-
-    await _dbContext.SaveChangesAsync(cancellationToken);
-
-    return new
-    {
-        user = new UserDto(logUser.ActorId, logUser.Email, logUser.IsAdmin),
-        accessToken = accessToken,
-        refreshToken = newRefreshToken.Token
-    };
-}*/
