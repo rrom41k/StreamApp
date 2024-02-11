@@ -140,7 +140,7 @@ public class GenreService : IGenreService
             throw new OperationCanceledException();
         }
 
-        var genreToUpdate = await _dbContext.Genres.AsNoTracking()
+        var genreToUpdate = await _dbContext.Genres
             .FirstOrDefaultAsync(genreToUpdate => genreToUpdate.GenreId == id, cancellationToken);
 
         if (genreToUpdate == null)
@@ -148,7 +148,7 @@ public class GenreService : IGenreService
             throw new ArgumentException("Genre not found.");
         }
 
-        UpdateGenreHelper(genreToUpdate, genreUpdateCommand);
+        UpdateGenreHelper(ref genreToUpdate, genreUpdateCommand);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
 
@@ -178,7 +178,7 @@ public class GenreService : IGenreService
 
     // Helpful methods
 
-    private void UpdateGenreHelper(Genre genreToUpdate, GenreUpdateCommand genreUpdateCommand)
+    private void UpdateGenreHelper(ref Genre genreToUpdate, GenreUpdateCommand genreUpdateCommand)
     {
         genreToUpdate.Name = string.IsNullOrEmpty(genreUpdateCommand.name) ? genreToUpdate.Name : 
             genreUpdateCommand.name;

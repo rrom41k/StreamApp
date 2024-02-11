@@ -179,7 +179,7 @@ public class UserService : IUserService
             throw new OperationCanceledException();
         }
 
-        var userToUpdate = await _dbContext.Users.AsNoTracking()
+        var userToUpdate = await _dbContext.Users
             .FirstOrDefaultAsync(userToUpdate => userToUpdate.UserId == id, cancellationToken);
 
         if (userToUpdate == null)

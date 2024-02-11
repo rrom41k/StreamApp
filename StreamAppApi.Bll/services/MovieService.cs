@@ -231,7 +231,7 @@ public class MovieService : IMovieService
             throw new OperationCanceledException();
         }
 
-        var movieToUpdate = await _dbContext.Movies.AsNoTracking()
+        var movieToUpdate = await _dbContext.Movies
             .Include(movie => movie.Users)
             .Include(movie => movie.Parameters)
             .Include(movie => movie.Actors)
@@ -245,8 +245,7 @@ public class MovieService : IMovieService
             throw new ArgumentException("Movie not found.");
         }
 
-        UpdateMovieHelper(movieToUpdate, movieUpdateCommand);
-        _dbContext.Movies.Update(movieToUpdate);
+        UpdateMovieHelper(ref movieToUpdate, movieUpdateCommand);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return MovieToDto(movieToUpdate);
@@ -359,7 +358,7 @@ public class MovieService : IMovieService
         return listActors;
     }
 
-    private void UpdateMovieHelper(Movie movieToUpdate, MovieUpdateCommand movieUpdateCommand)
+    private void UpdateMovieHelper(ref Movie movieToUpdate, MovieUpdateCommand movieUpdateCommand)
     {
         movieToUpdate.Poster = string.IsNullOrEmpty(movieUpdateCommand.poster) ? movieToUpdate.Poster 
             : movieUpdateCommand.poster;

@@ -111,7 +111,7 @@ public class ActorService : IActorService
             throw new OperationCanceledException();
         }
 
-        var actorToUpdate = await _dbContext.Actors.AsNoTracking()
+        var actorToUpdate = await _dbContext.Actors
             .FirstOrDefaultAsync(actorToUpdate => actorToUpdate.ActorId == id, cancellationToken);
 
         if (actorToUpdate == null)
@@ -119,7 +119,7 @@ public class ActorService : IActorService
             throw new ArgumentException("Actor not found.");
         }
 
-        UpdateActorHelper(actorToUpdate, actorUpdateCommand);
+        UpdateActorHelper(ref actorToUpdate, actorUpdateCommand);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
 
@@ -147,7 +147,7 @@ public class ActorService : IActorService
         return ActorToDto(existingActor);
     }
 
-    private void UpdateActorHelper(Actor actorToUpdate, ActorUpdateCommand actorUpdateCommand)
+    private void UpdateActorHelper(ref Actor actorToUpdate, ActorUpdateCommand actorUpdateCommand)
     {
         actorToUpdate.Name = actorUpdateCommand.name ?? actorToUpdate.Name;
         actorToUpdate.Slug = actorUpdateCommand.slug.ToLower() ?? actorToUpdate.Slug;
