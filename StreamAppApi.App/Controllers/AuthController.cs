@@ -80,7 +80,6 @@ public class AuthController : ControllerBase
 
         try
         {
-            //var result = await _authService.GetNewTokens(getNewTokensCommand, cancellationToken);
             var result = await _authService.GetNewTokens(cancellationToken);
 
             return Ok(result);

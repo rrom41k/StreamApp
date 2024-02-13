@@ -32,7 +32,7 @@ public class GenreController : ControllerBase
                 return NotFound();
             }
 
-            return Ok(new { genre });
+            return Ok(genre);
         }
         catch (Exception ex)
         {
@@ -89,7 +89,7 @@ public class GenreController : ControllerBase
         {
             var createdGenre = await _genreService.CreateGenre(genreCreateCommand, cancellationToken);
 
-            return Ok(new { genre = createdGenre });
+            return Ok(createdGenre);
         }
         catch (Exception ex)
         {
@@ -112,7 +112,7 @@ public class GenreController : ControllerBase
                 return NotFound();
             }
 
-            return Ok(new { genre });
+            return Ok(genre);
         }
         catch (Exception ex)
         {
@@ -131,7 +131,7 @@ public class GenreController : ControllerBase
         {
             var updatedGenre = await _genreService.UpdateGenre(id, genreUpdateCommand, cancellationToken);
 
-            return Ok(new { genre = updatedGenre });
+            return Ok(updatedGenre);
         }
         catch (Exception ex)
         {

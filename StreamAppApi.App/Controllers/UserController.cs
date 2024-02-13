@@ -34,7 +34,7 @@ public class UserController : ControllerBase
                 return NotFound();
             }
 
-            return Ok(new { user });
+            return Ok(user);
         }
         catch (Exception ex)
         {
@@ -53,7 +53,7 @@ public class UserController : ControllerBase
             var userId = User.FindFirst("_id")?.Value;
             var updatedUser = await _userService.UpdateUser(userId, userUpdateCommand, cancellationToken);
 
-            return Ok(new { user = updatedUser });
+            return Ok(updatedUser);
         }
         catch (Exception ex)
         {
@@ -118,7 +118,7 @@ public class UserController : ControllerBase
         {
             var createdUser = await _userService.CreateUser(userCreateCommand, cancellationToken);
 
-            return Ok(new { user = createdUser });
+            return Ok(createdUser);
         }
         catch (Exception ex)
         {
@@ -180,7 +180,7 @@ public class UserController : ControllerBase
                 return NotFound();
             }
 
-            return Ok(new { user });
+            return Ok(user);
         }
         catch (Exception ex)
         {
@@ -199,7 +199,7 @@ public class UserController : ControllerBase
         {
             var updatedUser = await _userService.UpdateUser(id, userUpdateCommand, cancellationToken);
 
-            return Ok(new { user = updatedUser });
+            return Ok(updatedUser);
         }
         catch (Exception ex)
         {

@@ -32,7 +32,7 @@ public class ActorController : ControllerBase
                 return NotFound();
             }
 
-            return Ok(new { actor });
+            return Ok(actor);
         }
         catch (Exception ex)
         {
@@ -71,7 +71,7 @@ public class ActorController : ControllerBase
         {
             var createdActor = await _actorService.CreateActor(actorCreateCommand, cancellationToken);
 
-            return Ok(new { actor = createdActor });
+            return Ok(createdActor);
         }
         catch (Exception ex)
         {
@@ -89,7 +89,7 @@ public class ActorController : ControllerBase
             var cancellationToken = HttpContext?.RequestAborted ?? default;
             var actor = await _actorService.GetActorById(id, cancellationToken);
 
-            return Ok(new { actor });
+            return Ok(actor);
         }
         catch (Exception ex)
         {
@@ -108,7 +108,7 @@ public class ActorController : ControllerBase
         {
             var updatedActor = await _actorService.UpdateActor(id, actorUpdateCommand, cancellationToken);
 
-            return Ok(new { actor = updatedActor });
+            return Ok(updatedActor);
         }
         catch (Exception ex)
         {
