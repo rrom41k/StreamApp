@@ -32,7 +32,7 @@ public class MovieController : ControllerBase
                 return NotFound();
             }
 
-            return Ok(new { movie });
+            return Ok(movie);
         }
         catch (Exception ex)
         {
@@ -55,7 +55,7 @@ public class MovieController : ControllerBase
                 return NotFound();
             }
 
-            return Ok(new { movie });
+            return Ok(movie);
         }
         catch (Exception ex)
         {
@@ -73,7 +73,7 @@ public class MovieController : ControllerBase
         {
             var movies = await _movieService.GetMovieByGenres(genreIds, cancellationToken);
 
-            return Ok(new { movie = movies });
+            return Ok(movies);
         }
         catch (Exception ex)
         {
@@ -148,7 +148,7 @@ public class MovieController : ControllerBase
         {
             var createdMovie = await _movieService.CreateMovie(movieCreateCommand, cancellationToken);
 
-            return Ok(new { movie = createdMovie });
+            return Ok(createdMovie);
         }
         catch (Exception ex)
         {
@@ -171,7 +171,7 @@ public class MovieController : ControllerBase
                 return NotFound();
             }
 
-            return Ok(new { movie });
+            return Ok(movie);
         }
         catch (Exception ex)
         {
@@ -190,7 +190,7 @@ public class MovieController : ControllerBase
         {
             var updatedMovie = await _movieService.UpdateMovie(id, movieUpdateCommand, cancellationToken);
 
-            return Ok(new { movie = updatedMovie });
+            return Ok(updatedMovie);
         }
         catch (Exception ex)
         {

@@ -1,6 +1,6 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# 
+#
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamAppApi.App", "StreamAppApi.App\StreamAppApi.App.csproj", "{60E242B4-C128-4328-8518-BD6BB59CA326}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamAppApi.Bll", "StreamAppApi.Bll\StreamAppApi.Bll.csproj", "{7C1D35BC-C1E5-4CBF-8F81-D293EB1348D7}"
@@ -10,10 +10,6 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamAppApi.Migrations", "StreamAppApi.Migrations\StreamAppApi.Migrations.csproj", "{288A7001-6BC3-4729-9436-6D6C8D8F4C05}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "StreamAppApi.Tests", "StreamAppApi.Tests\StreamAppApi.Tests.csproj", "{3AF1D06A-3EA9-4528-886D-57E104D08625}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "new-test", "new-test", "{8BBB9BDF-C139-402D-A49F-1A95CD18FAB2}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlazorApp1", "new-test\BlazorApp1\BlazorApp1.csproj", "{78AF6B58-5B2B-43D4-BF77-8EFB34AE6C13}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -41,12 +37,7 @@ Global
 		{3AF1D06A-3EA9-4528-886D-57E104D08625}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3AF1D06A-3EA9-4528-886D-57E104D08625}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3AF1D06A-3EA9-4528-886D-57E104D08625}.Release|Any CPU.Build.0 = Release|Any CPU
-		{78AF6B58-5B2B-43D4-BF77-8EFB34AE6C13}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{78AF6B58-5B2B-43D4-BF77-8EFB34AE6C13}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{78AF6B58-5B2B-43D4-BF77-8EFB34AE6C13}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{78AF6B58-5B2B-43D4-BF77-8EFB34AE6C13}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{78AF6B58-5B2B-43D4-BF77-8EFB34AE6C13} = {8BBB9BDF-C139-402D-A49F-1A95CD18FAB2}
 	EndGlobalSection
 EndGlobal
