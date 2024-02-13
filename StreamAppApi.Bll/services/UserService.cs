@@ -42,17 +42,18 @@ public class UserService : IUserService
             throw new ArgumentException("Invalid password length");
         }
 
+        var userContains = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == user.email, cancellationToken);
+        if (userContains != null)
+        {
+            throw new("User with this email contains in DB");
+        }
+
         CreatePasswordHash(user.password, out var passwordHash, out var passwordSalt);
         User newUser = new(
             user.email,
             passwordHash,
             passwordSalt,
             user.isAdmin);
-
-        if (_dbContext.Users.Contains(newUser))
-        {
-            throw new("User with this email contains in DB");
-        }
 
         _dbContext.Users.Add(newUser);
         await _dbContext.SaveChangesAsync(cancellationToken);

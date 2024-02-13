@@ -41,8 +41,13 @@ public class AuthService : IAuthService
         {
             throw new OperationCanceledException();
         }
-        
-        
+
+        var userContains = await _dbContext.Users.FirstOrDefaultAsync(u => u.Email == 
+            authRegisterCommand.email, cancellationToken);
+        if (userContains != null)
+        {
+            throw new("User with this email contains in DB");
+        }
         
         CreatePasswordHash(authRegisterCommand.password, out var passwordHash, out var passwordSalt);
         User newUser = new(authRegisterCommand.email, passwordHash, passwordSalt);

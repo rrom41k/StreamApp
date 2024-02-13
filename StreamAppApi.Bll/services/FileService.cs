@@ -33,8 +33,8 @@ public class FileService : IFileService
                 throw new ArgumentException("File is not provided or empty.");
             }
 
-            var uploadsFolder = _hostingEnvironment.ContentRootPath
-                + @"\wwwroot\uploads\"
+            var uploadsFolder = _hostingEnvironment.WebRootPath 
+                + "/uploads"
                 + (filesAddCommand.folder ?? "default");
 
             if (!Directory.Exists(uploadsFolder))
