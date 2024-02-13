@@ -64,7 +64,7 @@ public class MovieController : ControllerBase
     }
 
     // GET: api/movies/by-genres
-    [HttpPost("by-genres")]
+    [HttpGet("by-genres")]
     public async Task<IActionResult> GetMovieByGenres([FromBody] MovieByGenresCommand genreIds)
     {
         var cancellationToken = HttpContext?.RequestAborted ?? default;
@@ -117,7 +117,7 @@ public class MovieController : ControllerBase
         }
     }
 
-    // GET: api/movies/most-popular
+    // POST: api/movies/most-update-count-opened
     [HttpPost("update-count-opened")]
     public async Task<IActionResult> UpdateCountOpened([FromBody] UpdateCountOpenedCommand updateCountOpenedCommand)
     {
