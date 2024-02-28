@@ -78,11 +78,12 @@ public class AuthService : IAuthService
         return CreateResult(user, accessToken, refreshToken);
     }
 
-    public async Task<ResultAuthDto> GetNewTokens(CancellationToken cancellationToken = default)
+    public async Task<ResultAuthDto> GetNewTokens(AuthGetNewTokensCommand? getNewTokensCommand, 
+        CancellationToken cancellationToken = default)
     {
         // Получаем refresh токен из запроса или из Cookie, если ничего не было передано в body
-        //string? refreshToken = getNewTokensCommand?.refreshToken ?? _httpContextAccessor.HttpContext?.Request.Cookies["refreshToken"]; 
-        var refreshToken = _httpContextAccessor.HttpContext?.Request.Cookies["refreshToken"];
+        var refreshToken = getNewTokensCommand?.refreshToken ?? 
+            _httpContextAccessor.HttpContext?.Request.Cookies["refreshToken"];
 
         if (refreshToken == null)
         {

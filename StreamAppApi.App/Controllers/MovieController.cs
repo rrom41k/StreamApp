@@ -117,17 +117,17 @@ public class MovieController : ControllerBase
         }
     }
 
-    // POST: api/movies/most-update-count-opened
-    [HttpPost("update-count-opened")]
+    // PUT: api/movies/update-count-opened
+    [HttpPut("update-count-opened")]
     public async Task<IActionResult> UpdateCountOpened([FromBody] UpdateCountOpenedCommand updateCountOpenedCommand)
     {
         var cancellationToken = HttpContext?.RequestAborted ?? default;
 
         try
         {
-            var movies = await _movieService.UpdateCountOpenedAsync(updateCountOpenedCommand, cancellationToken);
+            await _movieService.UpdateCountOpenedAsync(updateCountOpenedCommand, cancellationToken);
 
-            return Ok(movies);
+            return Ok();
         }
         catch (Exception ex)
         {

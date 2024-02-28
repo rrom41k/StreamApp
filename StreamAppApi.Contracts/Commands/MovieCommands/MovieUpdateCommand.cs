@@ -9,6 +9,7 @@ public record MovieUpdateCommand(
     string? videoUrl,
     string? slug,
     ParameterDto? parameters,
+    string[]? actors,
     double? rating,
     int? countOpened,
     bool? isSendTelegram);

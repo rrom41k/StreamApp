@@ -15,7 +15,7 @@ public interface IMovieService
         MovieByGenresCommand genreIds,
         CancellationToken cancellationToken);
 
-    Task<MovieDto> UpdateCountOpenedAsync(
+    Task UpdateCountOpenedAsync(
         UpdateCountOpenedCommand updateCountOpenedCommand,
         CancellationToken cancellationToken);
 

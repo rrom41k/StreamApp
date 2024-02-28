@@ -7,5 +7,6 @@ public interface IAuthService
 {
     Task<ResultAuthDto> RegisterUser(AuthRegisterCommand authRegisterCommand, CancellationToken cancellationToken);
     Task<ResultAuthDto> LoginUser(AuthLoginCommand authLoginCommandCommand, CancellationToken cancellationToken);
-    Task<ResultAuthDto> GetNewTokens(CancellationToken cancellationToken);
+    Task<ResultAuthDto> GetNewTokens(AuthGetNewTokensCommand? getNewTokensCommand, 
+        CancellationToken cancellationToken = default);
 }

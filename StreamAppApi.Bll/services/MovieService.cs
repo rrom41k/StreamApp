@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 using StreamAppApi.Bll.DbConfiguration;
 using StreamAppApi.Contracts.Commands.MovieCommands;
@@ -96,7 +97,7 @@ public class MovieService : IMovieService
         return MapMoviesToDto(existingMovies);
     }
 
-    public async Task<MovieDto> UpdateCountOpenedAsync(
+    public async Task UpdateCountOpenedAsync(
         UpdateCountOpenedCommand updateCountOpenedCommand,
         CancellationToken cancellationToken = default)
     {
@@ -106,12 +107,6 @@ public class MovieService : IMovieService
         }
 
         var existingMovie = await _dbContext.Movies
-            .Include(movie => movie.Users)
-            .Include(movie => movie.Parameters)
-            .Include(movie => movie.Actors)
-            .ThenInclude(actorMovie => actorMovie.Actor)
-            .Include(movie => movie.Genres)
-            .ThenInclude(genreMovie => genreMovie.Genre)
             .FirstOrDefaultAsync(m => m.Slug == updateCountOpenedCommand.slug, cancellationToken);
 
         if (existingMovie != null)
@@ -123,8 +118,6 @@ public class MovieService : IMovieService
         {
             throw new ArgumentException("Movie not found.");
         }
-
-        return MovieToDto(existingMovie);
     }
 
     public async Task<List<MovieDto>> GetAllMovies(CancellationToken cancellationToken = default)
@@ -136,10 +129,7 @@ public class MovieService : IMovieService
 
         string? searchTerm = _httpContextAccessor.HttpContext.Request.Query["searchTerm"];
 
-        if (searchTerm == null)
-        {
-            searchTerm = "";
-        }
+        searchTerm ??= string.Empty;
 
         var movies = await _dbContext.Movies
             .Where(
@@ -169,26 +159,17 @@ public class MovieService : IMovieService
             throw new OperationCanceledException();
         }
 
-        var findMovie =
-            await _dbContext.Movies
-                .Include(movie => movie.Users)
-                .Include(movie => movie.Parameters)
-                .Include(movie => movie.Actors)
-                .ThenInclude(actorMovie => actorMovie.Actor)
-                .Include(movie => movie.Genres)
-                .ThenInclude(genreMovie => genreMovie.Genre)
-                .FirstOrDefaultAsync(
-                    movie => movie.Slug == movieCreateCommand.slug.ToLower(),
-                    cancellationToken);
+        var existingMovie = await _dbContext.Movies.AsNoTracking()
+            .FirstOrDefaultAsync(movie => movie.Slug == movieCreateCommand.slug.ToLower(), cancellationToken);
 
-        if (findMovie != null)
+        if (existingMovie != null)
         {
-            throw new("Movie with this slug contains in DB");
+            throw new("Movie with this slug already exists in the database");
         }
 
-        var newMovie = CreateMovieHelper(movieCreateCommand);
+        var newMovie = await CreateMovieHelper(movieCreateCommand, cancellationToken);
 
-        _dbContext.Parameters.Add(newMovie.Parameters);
+        await _dbContext.Parameters.AddAsync(newMovie.Parameters, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         _telegramBotService.SendPostLink(newMovie.Title, newMovie.Poster);
@@ -245,7 +226,7 @@ public class MovieService : IMovieService
             throw new ArgumentException("Movie not found.");
         }
 
-        UpdateMovieHelper(ref movieToUpdate, movieUpdateCommand);
+        UpdateMovieHelper(ref movieToUpdate, movieUpdateCommand, cancellationToken);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
         return MovieToDto(movieToUpdate);
@@ -298,7 +279,7 @@ public class MovieService : IMovieService
 
     // Helpful methods
 
-    private Movie CreateMovieHelper(MovieCreateCommand movieCreateCommand)
+    private async Task<Movie> CreateMovieHelper(MovieCreateCommand movieCreateCommand, CancellationToken cancellationToken)
     {
         Movie newMovie = new(
             movieCreateCommand.poster,
@@ -309,14 +290,14 @@ public class MovieService : IMovieService
             movieCreateCommand.rating ?? 4.0,
             movieCreateCommand.countOpened ?? 0,
             movieCreateCommand.isSendTelegram ?? false) { Parameters = DtoToParameters(movieCreateCommand.parameters) };
-        newMovie.Genres = MapGenresArrToList(newMovie, movieCreateCommand.genres);
-        newMovie.Actors = MapActorsArrToList(newMovie, movieCreateCommand.actors);
-        _dbContext.Movies.Add(newMovie);
+        newMovie.Genres = await MapGenresArrToList(newMovie, movieCreateCommand.genres, cancellationToken);
+        newMovie.Actors = await MapActorsArrToList(newMovie, movieCreateCommand.actors, cancellationToken);
+        await _dbContext.Movies.AddAsync(newMovie, cancellationToken);
 
         return newMovie;
     }
 
-    private List<GenreMovie> MapGenresArrToList(Movie movie, string[] genres)
+    private async Task<List<GenreMovie>> MapGenresArrToList(Movie movie, string[] genres, CancellationToken cancellationToken)
     {
         var listGenres = new List<GenreMovie>();
 
@@ -326,18 +307,18 @@ public class MovieService : IMovieService
             {
                 Movie = movie,
                 //MovieId = movie.MovieId,
-                Genre = _dbContext.Genres.FirstOrDefault(genre => genre.GenreId.Contains(genreId))
+                Genre = await _dbContext.Genres.FirstOrDefaultAsync(genre => genre.GenreId.Contains(genreId), cancellationToken)
                     ?? throw new ArgumentException("Movie with this Id don't exist")
                 //GenreId = genreId
             };
-            _dbContext.GenreMovies.Add(newGenreMovie);
+            await _dbContext.GenreMovies.AddAsync(newGenreMovie, cancellationToken);
             listGenres.Add(newGenreMovie);
         }
 
         return listGenres;
     }
 
-    private List<ActorMovie> MapActorsArrToList(Movie movie, string[] actors)
+    private async Task<List<ActorMovie>> MapActorsArrToList(Movie movie, string[] actors, CancellationToken cancellationToken)
     {
         var listActors = new List<ActorMovie>();
 
@@ -348,17 +329,17 @@ public class MovieService : IMovieService
                 //MovieId = movie.MovieId, 
                 Movie = movie,
                 //ActorId = actorId
-                Actor = _dbContext.Actors.First(actor => actor.ActorId.Contains(actorId))
+                Actor = await _dbContext.Actors.FirstAsync(actor => actor.ActorId.Contains(actorId), cancellationToken)
                     ?? throw new ArgumentException("Not found Actor")
             };
-            _dbContext.ActorMovies.Add(newActorMovie);
+            await _dbContext.ActorMovies.AddAsync(newActorMovie, cancellationToken);
             listActors.Add(newActorMovie);
         }
 
         return listActors;
     }
 
-    private void UpdateMovieHelper(ref Movie movieToUpdate, MovieUpdateCommand movieUpdateCommand)
+    private void UpdateMovieHelper(ref Movie movieToUpdate, MovieUpdateCommand movieUpdateCommand, CancellationToken cancellationToken)
     {
         movieToUpdate.Poster = string.IsNullOrEmpty(movieUpdateCommand.poster) ? movieToUpdate.Poster 
             : movieUpdateCommand.poster;
@@ -383,6 +364,27 @@ public class MovieService : IMovieService
         movieToUpdate.CountOpened = movieUpdateCommand.countOpened ?? movieToUpdate.CountOpened;
         
         movieToUpdate.IsSendTelegram = movieUpdateCommand.isSendTelegram ?? movieToUpdate.IsSendTelegram;
+
+        if (!movieUpdateCommand.actors.IsNullOrEmpty())
+        {
+            movieToUpdate.Actors = UpdateActors(movieUpdateCommand.actors, movieToUpdate.MovieId);
+        }
+    }
+
+    private  List<ActorMovie> UpdateActors(string[] actors, string movieId)
+    {
+        List<ActorMovie> actorsToUpdate = new List<ActorMovie>();
+        // Удаляем всех актёров, обновляемого фильма
+        _dbContext.ActorMovies.RemoveRange( _dbContext.ActorMovies.Where(movie => movie.MovieId == movieId).ToList());
+        
+        // Добавляем новых актёров
+        foreach (var actorId in actors)
+        { 
+            actorsToUpdate.Add(new() { ActorId = actorId, MovieId = movieId });
+            _dbContext.ActorMovies.AddRange(actorsToUpdate);
+        }
+
+        return actorsToUpdate;
     }
 
     static ParameterDto ParametersToDto(MovieParameter parameters)
