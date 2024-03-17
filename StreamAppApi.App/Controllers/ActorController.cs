@@ -29,7 +29,7 @@ public class ActorController : ControllerBase
 
             if (actor == null)
             {
-                return NotFound();
+                return NotFound("Actor was not found");
             }
 
             return Ok(actor);

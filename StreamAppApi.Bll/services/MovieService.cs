@@ -227,7 +227,6 @@ public class MovieService : IMovieService
         }
 
         UpdateMovieHelper(ref movieToUpdate, movieUpdateCommand, cancellationToken);
-        await _dbContext.SaveChangesAsync(cancellationToken);
 
         return MovieToDto(movieToUpdate);
     }
@@ -306,10 +305,8 @@ public class MovieService : IMovieService
             var newGenreMovie = new GenreMovie
             {
                 Movie = movie,
-                //MovieId = movie.MovieId,
                 Genre = await _dbContext.Genres.FirstOrDefaultAsync(genre => genre.GenreId.Contains(genreId), cancellationToken)
                     ?? throw new ArgumentException("Movie with this Id don't exist")
-                //GenreId = genreId
             };
             await _dbContext.GenreMovies.AddAsync(newGenreMovie, cancellationToken);
             listGenres.Add(newGenreMovie);
@@ -326,9 +323,7 @@ public class MovieService : IMovieService
         {
             var newActorMovie = new ActorMovie
             {
-                //MovieId = movie.MovieId, 
                 Movie = movie,
-                //ActorId = actorId
                 Actor = await _dbContext.Actors.FirstAsync(actor => actor.ActorId.Contains(actorId), cancellationToken)
                     ?? throw new ArgumentException("Not found Actor")
             };
@@ -369,22 +364,50 @@ public class MovieService : IMovieService
         {
             movieToUpdate.Actors = UpdateActors(movieUpdateCommand.actors, movieToUpdate.MovieId);
         }
+
+        if (!movieUpdateCommand.genres.IsNullOrEmpty())
+        {
+            movieToUpdate.Genres = UpdateGenres(movieUpdateCommand.genres, movieToUpdate.MovieId);
+        }
+        
+        _dbContext.SaveChangesAsync(cancellationToken);
     }
 
-    private  List<ActorMovie> UpdateActors(string[] actors, string movieId)
+    private  List<ActorMovie> UpdateActors(string[] actorsIds, string movieId)
     {
         List<ActorMovie> actorsToUpdate = new List<ActorMovie>();
         // Удаляем всех актёров, обновляемого фильма
         _dbContext.ActorMovies.RemoveRange( _dbContext.ActorMovies.Where(movie => movie.MovieId == movieId).ToList());
         
+        // Получаем список актёров
+        var actors = _dbContext.Actors.Where(actor => actorsIds.Contains(actor.ActorId)).ToList();
+        
         // Добавляем новых актёров
-        foreach (var actorId in actors)
-        { 
-            actorsToUpdate.Add(new() { ActorId = actorId, MovieId = movieId });
-            _dbContext.ActorMovies.AddRange(actorsToUpdate);
-        }
+        foreach (var actor in actors)
+            actorsToUpdate.Add(new() { ActorId = actor.ActorId, MovieId = movieId, Actor = actor });
+        
+        _dbContext.ActorMovies.AddRange(actorsToUpdate);
+        
 
         return actorsToUpdate;
+    }
+
+    private List<GenreMovie> UpdateGenres(string[] genresIds, string movieId)
+    {
+        List<GenreMovie> genresToUpdate = new List<GenreMovie>();
+        // Удаляем все жанры, обновляемого фильма
+        _dbContext.GenreMovies.RemoveRange( _dbContext.GenreMovies.Where(movie => movie.MovieId == movieId).ToList());
+        
+        // Получаем список жанров
+        var genres = _dbContext.Genres.Where(genre => genresIds.Contains(genre.GenreId)).ToList();
+        
+        // Добавляем новые жанры
+        foreach (var genre in genres)
+            genresToUpdate.Add(new() { GenreId = genre.GenreId, MovieId = movieId, Genre = genre });
+        
+        _dbContext.GenreMovies.AddRange(genresToUpdate);
+
+        return genresToUpdate;
     }
 
     static ParameterDto ParametersToDto(MovieParameter parameters)
